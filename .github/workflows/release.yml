@@ -1,0 +1,52 @@
+# Version : une étiquette `vX.Y.Z` poussée sur main publie l'image sur le registre GitHub et crée la version avec l'archive.
+# L'image est construite depuis le dépôt tel qu'il est à l'étiquette ; rien n'est publié sans que la CI soit verte.
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  verifier:
+    uses: ./.github/workflows/ci.yml
+
+  publier:
+    runs-on: ubuntu-latest
+    needs: verifier
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version attendue par le code
+        run: |
+          attendu="v$(python -c 'import core; print(core.VERSION)')"
+          test "$attendu" = "${GITHUB_REF_NAME}" || { echo "l'étiquette ${GITHUB_REF_NAME} ne correspond pas à core.VERSION ($attendu)"; exit 1; }
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            ghcr.io/${{ github.repository }}:latest
+      - name: Archive des sources
+        run: git archive --format=tar.gz --prefix=zelij-core/ -o zelij-core-${GITHUB_REF_NAME}.tar.gz HEAD
+      - name: Notes de version
+        run: |
+          python - <<'EOF'
+          import os, re, pathlib
+          v = os.environ["GITHUB_REF_NAME"].lstrip("v")
+          texte = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
+          m = re.search(rf"^## {re.escape(v)}[^\n]*\n(.*?)(?=^## |\Z)", texte, flags=re.S | re.M)
+          pathlib.Path("notes.md").write_text((m.group(1).strip() if m else "Voir CHANGELOG.md.") + "\n", encoding="utf-8")
+          EOF
+      - uses: softprops/action-gh-release@v2
+        with:
+          body_path: notes.md
+          files: zelij-core-${{ github.ref_name }}.tar.gz

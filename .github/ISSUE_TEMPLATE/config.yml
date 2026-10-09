@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Faille de sécurité
+    url: https://github.com/zelij-ai/zelij-core/blob/main/SECURITY.md
+    about: Ne la décrivez pas ici. Écrivez à securite@zelij.ai, la marche à suivre est dans SECURITY.md.
+  - name: Installation et usage
+    url: https://github.com/zelij-ai/zelij-core/tree/main/docs
+    about: Le guide d'installation et le mode d'emploi répondent aux questions d'usage ; lisez-les avant d'ouvrir une issue.

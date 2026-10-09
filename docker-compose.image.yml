@@ -1,0 +1,8 @@
+# Démarrer depuis l'image publiée, sans construction locale :
+#   docker compose -f docker-compose.yml -f docker-compose.image.yml up -d
+# (ajoutez -f docker-compose.tls.yml pour l'https). L'image d'une version porte son étiquette : fixez CORE_IMAGE_TAG
+# dans .env (ex. v0.7.2) pour ne pas suivre `latest` sans l'avoir décidé.
+services:
+  core-app:
+    image: ghcr.io/zelij-ai/zelij-core:${CORE_IMAGE_TAG:-latest}
+    build: !reset null

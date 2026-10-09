@@ -58,6 +58,16 @@ When the logs show `Uvicorn running on http://0.0.0.0:8000`, open http://localho
 
 Without SMTP, the login link is written to the container logs (never in production): request a link on the login page, then copy the `http://localhost:8000/connexion/…` address from `docker compose logs core-app`.
 
+### Without building the image
+
+Every release publishes a ready image on the GitHub registry. To use it instead of building:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.image.yml up -d
+```
+
+Pin the version in `.env` with `CORE_IMAGE_TAG=v0.7.2`; without it, `latest` follows the newest release at every restart. `docker-compose.image.yml` can also be added to the chapter 5 command for https.
+
 ## 5. Go live over https
 
 `docker-compose.tls.yml` adds a Caddy server in front of the office: automatic certificate, automatic renewal, http redirected to https. Three conditions: the domain points to the machine, ports 80 and 443 are open, `CORE_DOMAINE` is set in `.env`.

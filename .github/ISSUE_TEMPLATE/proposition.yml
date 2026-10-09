@@ -1,0 +1,34 @@
+name: Proposition
+description: Une amélioration du noyau, ou un module (cible de déploiement, agent) que vous avez construit et proposez.
+labels: [proposition]
+body:
+  - type: dropdown
+    id: nature
+    attributes:
+      label: Nature
+      options: ["Amélioration du noyau", "Module : cible de déploiement", "Module : agent", "Documentation"]
+    validations:
+      required: true
+  - type: textarea
+    id: probleme
+    attributes:
+      label: Le problème que ça règle
+      description: Pour quel fondateur, dans quelle situation, avec quel résultat attendu.
+    validations:
+      required: true
+  - type: textarea
+    id: proposition
+    attributes:
+      label: Ce que vous proposez
+      description: L'approche en quelques phrases ; pour un module, l'adresse du dépôt, ce que la cible sait faire et ce qu'elle exige du fondateur (comptes, clés, coûts).
+    validations:
+      required: true
+  - type: checkboxes
+    id: regles
+    attributes:
+      label: Règles de la maison
+      options:
+        - label: Les agents proposent, le fondateur décide : rien n'engage sans paquet de décision.
+          required: true
+        - label: Pas d'appel réseau dans les tests, aucune donnée réelle dans le code.
+          required: true

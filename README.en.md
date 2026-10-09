@@ -1,5 +1,7 @@
 # Zelij Core
 
+[![ci](https://github.com/zelij-ai/zelij-core/actions/workflows/ci.yml/badge.svg)](https://github.com/zelij-ai/zelij-core/actions/workflows/ci.yml) [![version](https://img.shields.io/github/v/release/zelij-ai/zelij-core?label=version)](https://github.com/zelij-ai/zelij-core/releases) [![licence](https://img.shields.io/badge/licence-AGPL--3.0-1c1917)](LICENSE)
+
 **Build your startup 100 % AI-native.** One office, four agents working for you, and you make every decision that matters.
 
 > Private preparation repository (decision of 8 October 2026). Nothing is published until the publication control passes and publication is decided. Licence: GNU AGPL v3. French is the working language of the product; this file is a short English summary.
@@ -25,8 +27,10 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Then open `http://localhost:8000`. Tests: `python -m pytest -q`. Publication control: `python scripts/controle_publication.py`.
+Or from the published image: `docker compose -f docker-compose.yml -f docker-compose.image.yml up -d` (`CORE_IMAGE_TAG=v…` in `.env` pins the version). Then open `http://localhost:8000`. Tests: `python -m pytest -q`. Publication control: `python scripts/controle_publication.py`.
 
 Full guides: **[Installation](docs/INSTALLATION.en.md)** (bare machine → office over https, SMTP, Software factory, backups, troubleshooting), **[User guide](docs/MODE-D-EMPLOI.en.md)** (every page, the agents, decisions, cost). Photos of the founder and agents go in [`portraits/`](portraits/README.md).
 
 by zelij.ai — https://zelij.ai/
+
+Contributing: `CONTRIBUTING.md` (in French; a contributed deployment target earns the matching pack for life). Security reports: `SECURITY.md`. Versions: `CHANGELOG.md`.

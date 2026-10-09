@@ -58,6 +58,16 @@ Quand les journaux affichent `Uvicorn running on http://0.0.0.0:8000`, ouvrez ht
 
 Sans SMTP, le lien de connexion est écrit dans les journaux du conteneur (jamais en production) : demandez un lien sur la page de connexion, puis copiez l'adresse `http://localhost:8000/connexion/…` depuis `docker compose logs core-app`.
 
+### Sans construire l'image
+
+Chaque version publie une image prête sur le registre GitHub. Pour l'utiliser au lieu de construire :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.image.yml up -d
+```
+
+Fixez la version dans `.env` avec `CORE_IMAGE_TAG=v0.7.2` : sans cela, `latest` suit la dernière version publiée à chaque redémarrage. Le fichier `docker-compose.image.yml` s'ajoute aussi à la commande du chapitre 5 pour l'https.
+
 ## 5. Mettre en ligne en https
 
 Le fichier `docker-compose.tls.yml` ajoute un serveur Caddy devant le bureau : certificat automatique, renouvellement automatique, redirection de http vers https. Trois conditions : le domaine pointe vers la machine, les ports 80 et 443 sont ouverts, `CORE_DOMAINE` est renseigné dans `.env`.

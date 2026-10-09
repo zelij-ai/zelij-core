@@ -1,0 +1,42 @@
+name: Bogue
+description: Quelque chose ne fait pas ce que la documentation annonce.
+labels: [bogue]
+body:
+  - type: markdown
+    attributes:
+      value: "Merci. Aucune donnée réelle ici : pas de clé, pas d'adresse de client, pas de capture avec des informations privées. Une faille de sécurité se signale à securite@zelij.ai, pas dans une issue."
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Celle qu'affiche /healthz ou le pied de page du bureau.
+      placeholder: "0.7.1"
+    validations:
+      required: true
+  - type: textarea
+    id: constat
+    attributes:
+      label: Ce qui se passe
+      description: Le geste fait, ce que vous attendiez, ce que vous avez obtenu. Le message exact s'il y en a un.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduire
+    attributes:
+      label: Comment le reproduire
+      placeholder: "1. … 2. … 3. …"
+    validations:
+      required: true
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation
+      options: ["Docker Compose (http)", "Docker Compose + docker-compose.tls.yml", "Sans Docker (uvicorn)"]
+    validations:
+      required: true
+  - type: textarea
+    id: journaux
+    attributes:
+      label: Journaux utiles
+      description: "`docker compose logs core-app`, en retirant tout ce qui est privé."
+      render: text

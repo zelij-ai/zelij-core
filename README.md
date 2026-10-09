@@ -1,5 +1,7 @@
 # Zelij Core
 
+[![ci](https://github.com/zelij-ai/zelij-core/actions/workflows/ci.yml/badge.svg)](https://github.com/zelij-ai/zelij-core/actions/workflows/ci.yml) [![version](https://img.shields.io/github/v/release/zelij-ai/zelij-core?label=version)](https://github.com/zelij-ai/zelij-core/releases) [![licence](https://img.shields.io/badge/licence-AGPL--3.0-1c1917)](LICENSE)
+
 **Montez votre startup 100 % native IA.** Un bureau où des agents travaillent pour vous : ils proposent, vous décidez.
 
 > Dépôt privé de préparation (décision du 08/10/2026). Rien n'est publié tant que le contrôle de publication ne passe pas et que la publication n'est pas décidée. Licence : GNU AGPL v3.
@@ -33,6 +35,12 @@ Le bureau répond sur `http://localhost:8000`. Sans SMTP, le lien de connexion e
 
 Guides complets : **[Installation](docs/INSTALLATION.md)** (machine vide → bureau en https, SMTP, Software factory, sauvegardes, dépannage), **[Mode d'emploi](docs/MODE-D-EMPLOI.md)** (chaque page, les agents, les décisions, le coût), [Première semaine](docs/premiere-semaine.md). Vos photos (fondateur, agents) se déposent dans [`portraits/`](portraits/README.md).
 
+Depuis l'image publiée, sans construction locale (`CORE_IMAGE_TAG=v…` dans `.env` pour fixer la version) :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.image.yml up -d
+```
+
 En local sans Docker :
 
 ```bash
@@ -61,6 +69,10 @@ Ce que le noyau garantit, et qui est testé (`tests/test_securite.py`) :
 - **Export comptable** : les cellules qui ressemblent à une formule de tableur sont neutralisées.
 
 Signaler une faille : `securite@zelij.ai`, sans la publier avant correction. Avant chaque publication, `pip-audit -r requirements.txt` et `bandit -r core scripts -ll` doivent être vides.
+
+## Contribuer et suivre les versions
+
+`CONTRIBUTING.md` dit comment une contribution arrive dans une version (et la règle : une cible de déploiement contribuée vaut le pack correspondant gratuit à vie). `SECURITY.md` dit comment signaler une faille. `CHANGELOG.md` dit ce que chaque version change et ce qu'il reste à faire au fondateur.
 
 ## Tests et contrôle de publication
 
