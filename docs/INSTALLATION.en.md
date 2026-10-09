@@ -18,7 +18,7 @@ No account to create at zelij.ai: the free edition phones nobody.
 ## 2. Get the code
 
 ```bash
-git clone <public repository address of Zelij Core>
+git clone https://github.com/zelij-ai/zelij-core.git
 cd zelij-core
 ```
 

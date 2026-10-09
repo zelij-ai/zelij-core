@@ -18,7 +18,7 @@ Pas de compte à créer chez zelij.ai : l'édition gratuite ne téléphone à pe
 ## 2. Récupérer le code
 
 ```bash
-git clone <adresse du dépôt public de Zelij Core>
+git clone https://github.com/zelij-ai/zelij-core.git
 cd zelij-core
 ```
 
