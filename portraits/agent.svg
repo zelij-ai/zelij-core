@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Portrait d'agent : copiez ce fichier sous le nom de l'agent, ou remplacez-le par une photo">
+  <defs>
+    <linearGradient id="fond" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b241c"/><stop offset="1" stop-color="#15110d"/></linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#fond)"/>
+  <circle cx="128" cy="100" r="42" fill="#e8dcc4" opacity=".9"/>
+  <path d="M40 232c6-52 44-80 88-80s82 28 88 80z" fill="#e8dcc4" opacity=".8"/>
+</svg>

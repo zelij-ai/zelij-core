@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block titre %}Software factory{% endblock %}
+{% block contenu %}
+<div class="tete-page">
+  <div><p class="sur-titre">Développement, infrastructure, déploiement, exploitation</p><h1>Software factory</h1></div>
+  <div class="actions">
+    <form method="post" action="/batir/sonde"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--second" type="submit">Sonder le domaine</button></form>
+    <form method="post" action="/batir/sauvegarde"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--second" type="submit">Sauvegarder le bureau</button></form>
+    <form method="post" action="/batir/deployer"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--laiton" type="submit" {% if not pret %}disabled{% endif %}>Proposer une mise en ligne</button></form>
+  </div>
+</div>
+<p class="note">Sacha Ferrand (batisseur) travaille sur un seul dépôt, par demandes de fusion passées par la porte de sécurité, et ne met en ligne que ce que vous avez fusionné, après votre approbation. Une mise en ligne : bascule atomique, test de fumée, retour arrière automatique.</p>
+
+<section class="mesures" aria-label="État">
+  <article class="{% if not depot %}alerte{% endif %}"><strong>{% if depot %}✓{% else %}—{% endif %}</strong><span>dépôt du site {% if depot %}configuré{% else %}: SITE_DEPOT + GITHUB_TOKEN{% endif %}</span></article>
+  <article class="{% if not cible_ok %}alerte{% endif %}"><strong>{{ cible_nom }}</strong><span>{% if cible_ok %}cible prête{% else %}cible à configurer (voir .env.example){% endif %}</span></article>
+  <article><strong>{{ versions.courante or '—' }}</strong><span>version en ligne{% if versions.versions %} · {{ versions.versions|length }} gardée(s){% endif %}</span></article>
+  <article><strong>{{ sauvegardes|length }}</strong><span>sauvegarde(s) du bureau</span></article>
+</section>
+
+<div class="deux-colonnes">
+<section>
+  {% if sonde %}
+  <section class="bloc">
+    <h2>Relevé du domaine · {{ sonde.releve_le[:16]|replace('T', ' ') }} UTC</h2>
+    <p><span class="statut {% if sonde.ok %}statut--terminee{% else %}statut--echec{% endif %}">{{ 'tout répond' if sonde.ok else 'à regarder' }}</span> {{ sonde.domaine }}</p>
+    <ul class="liste">
+      <li><strong>DNS</strong> <small>{{ sonde.dns.adresses|join(', ') or 'aucune adresse' }}</small></li>
+      <li><strong>Certificat</strong> <small>{% if sonde.certificat.expire_le %}expire le {{ sonde.certificat.expire_le }} ({{ sonde.certificat.jours }} jours) · {{ sonde.certificat.emetteur }}{% else %}{{ sonde.certificat.detail }}{% endif %}</small></li>
+      <li><strong>HTTP</strong> <small>{% if sonde.http.statut %}{{ sonde.http.statut }} en {{ sonde.http.duree_ms }} ms{% else %}{{ sonde.http.detail }}{% endif %}{% if sonde.http.en_tetes_manquants %} · en-têtes manquants : {{ sonde.http.en_tetes_manquants|join(', ') }}{% endif %}</small></li>
+    </ul>
+    {% if sonde.constats %}<ul class="liste liste--serree">{% for x in sonde.constats %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+  </section>
+  {% endif %}
+  <section class="bloc">
+    <h2>Ce que la porte de sécurité vérifie</h2>
+    <ul class="liste liste--serree">
+      <li>300 lignes changées au plus par proposition, texte seulement, douze fichiers au plus</li>
+      <li>aucun secret, aucune clé, aucun mot de passe dans le diff</li>
+      <li>aucun fichier d'infrastructure ni de service (Dockerfile, compose, systemd, serveur web)</li>
+      <li>dépendances déclarées sans vulnérabilité connue (base OSV, sans rien installer)</li>
+      <li>après mise en ligne : page d'accueil en 200, en-têtes de sécurité relevés, retour arrière si la fumée échoue</li>
+    </ul>
+    <p class="note">La porte est du code, pas une opinion : rien ne passe sans elle. La revue par un Tech Lead et la veille continue sont des postes libres du catalogue.</p>
+  </section>
+  <section class="bloc">
+    <h2>Préparer la machine et le domaine chez OVH</h2>
+    <p class="note">Le Bâtisseur ne commande rien et ne paie rien. Voici ce que vous faites vous-même, puis vous collez les clés dans le fichier d'environnement.</p>
+    <ol class="liste liste--serree">{% for e in panier.etapes %}<li><strong>{{ e.quoi }}</strong>{% if e.lien %} · <a href="{{ e.lien }}" rel="noopener">ouvrir</a>{% endif %}<br><small>{{ e.ensuite }}</small></li>{% endfor %}</ol>
+  </section>
+</section>
+<aside>
+  <section class="bloc">
+    <h2>Versions en ligne</h2>
+    {% if versions.versions %}<ul class="liste">{% for v in versions.versions %}<li><strong>{{ v }}</strong>{% if v == versions.courante %} <span class="statut statut--terminee">en ligne</span>{% endif %}</li>{% endfor %}</ul>
+    {% else %}<p class="vide">{{ versions.detail or 'Aucune version déployée.' }}</p>{% endif %}
+  </section>
+  <section class="bloc">
+    <h2>Sauvegardes du bureau</h2>
+    {% if sauvegardes %}<ul class="liste">{% for s in sauvegardes[:7] %}<li><strong>{{ s.fichier }}</strong> <small>{{ (s.octets / 1024)|round|int }} Ko</small></li>{% endfor %}</ul>
+    {% else %}<p class="vide">Aucune sauvegarde encore. En production, une sauvegarde part chaque jour ; quatorze sont gardées.</p>{% endif %}
+  </section>
+</aside>
+</div>
+{% endblock %}

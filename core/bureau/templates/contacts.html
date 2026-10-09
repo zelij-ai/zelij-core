@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block titre %}Contacts{% endblock %}
+{% block contenu %}
+<div class="tete-page">
+  <div><p class="sur-titre">Suivi des contacts</p><h1>Contacts</h1></div>
+</div>
+<p class="note">Une fiche par personne, le minimum nécessaire, une base légale écrite, une durée de conservation. Un contact opposé ne reçoit plus rien ; arrivé à l'échéance, il est oublié et seul le journal des droits reste.</p>
+<nav class="filtres" aria-label="Filtres">
+  {% for cle, lib in (("actifs", "Actifs"), ("a_traiter", "À traiter"), ("oublies", "Oubliés"), ("tous", "Tous")) %}
+  <a href="/contacts?filtre={{ cle }}" {% if filtre == cle %}aria-current="true"{% endif %}>{{ lib }}</a>
+  {% endfor %}
+</nav>
+
+<div class="deux-colonnes">
+<section>
+  {% if fiche %}
+  <section class="bloc fiche-contact">
+    <p class="fil"><a href="/contacts">Contacts</a> › fiche</p>
+    <h2>{% if fiche.oublie_le %}Contact oublié{% else %}{{ fiche.nom or fiche.email }}{% endif %}</h2>
+    {% if not fiche.oublie_le %}
+    <p class="small">{{ fiche.email }}{% if fiche.entreprise %} · {{ fiche.entreprise }}{% endif %} · <span class="puce">{{ fiche.role }}</span>
+      {% if fiche.opposition %}<span class="statut statut--refusee">opposition</span>{% endif %}</p>
+    <p class="small"><strong>Base légale :</strong> {{ fiche.base_legale_libelle }} · <strong>source :</strong> {{ fiche.source or '—' }} · <strong>conservation :</strong> {{ fiche.conservation_mois }} mois, oubli prévu le {{ fiche.oubli_prevu }}</p>
+    {% else %}<p class="small">Anonymisé le {{ fiche.oublie_le[:10] }}. Les dates et les droits exercés sont conservés.</p>{% endif %}
+    <h3>Échanges</h3>
+    {% if not echanges %}<p class="vide">Aucun échange.</p>{% else %}
+    <ul class="liste">{% for e in echanges %}<li><span class="puce puce--{{ e.sens }}">{{ e.sens }}</span> {{ e.date }} {% if e.canal %}· {{ e.canal }}{% endif %} <small>{{ e.resume or '(résumé effacé)' }} · {{ e.auteur }}</small></li>{% endfor %}</ul>{% endif %}
+    {% if not fiche.oublie_le %}
+    <form method="post" action="/contacts/{{ fiche.id }}/echanges" class="formulaire"><input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="grille-2">
+        <label>Sens <select name="sens"><option value="entrant">entrant</option><option value="sortant" {% if fiche.opposition %}disabled{% endif %}>sortant</option><option value="note">note</option></select></label>
+        <label>Canal <input name="canal" maxlength="60" placeholder="e-mail, téléphone, rendez-vous"></label>
+      </div>
+      <label>Résumé <textarea name="resume" rows="2" required maxlength="2000"></textarea></label>
+      <button class="bouton bouton--second" type="submit">Ajouter l'échange</button>
+    </form>
+    {% endif %}
+    <h3>Droits</h3>
+    {% if droits %}<ul class="liste">{% for d in droits %}<li><strong>{{ d.type }}</strong> <small>{{ d.date[:10] }} · {{ d.par }}{% if d.detail %} · {{ d.detail }}{% endif %}</small></li>{% endfor %}</ul>{% endif %}
+    {% if not fiche.oublie_le %}
+    <div class="actions">
+      {% for t, lib in (("acces", "Accès"), ("rectification", "Rectification"), ("opposition", "Opposition"), ("effacement", "Effacement")) %}
+      <form method="post" action="/contacts/{{ fiche.id }}/droits" {% if t == 'effacement' %}data-confirmer="Effacer définitivement cette fiche ? Seul le journal des droits restera."{% endif %}><input type="hidden" name="_csrf" value="{{ csrf }}">
+        <input type="hidden" name="type" value="{{ t }}"><button class="bouton bouton--second bouton--petit" type="submit">{{ lib }}</button></form>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if not contacts %}<p class="vide">Aucun contact dans ce filtre.</p>{% else %}
+  <div class="tableau-cadre"><table class="tableau">
+    <thead><tr><th>Contact</th><th>Rôle</th><th>Base légale</th><th>Échanges</th><th>Oubli prévu</th><th></th></tr></thead>
+    <tbody>{% for ct in contacts %}
+    <tr>
+      <td>{% if ct.oublie_le %}<em>oublié</em>{% else %}<a class="fort" href="/contacts?filtre={{ filtre }}&fiche={{ ct.id }}">{{ ct.nom or ct.email }}</a><small>{{ ct.entreprise }}</small>{% endif %}</td>
+      <td><span class="puce">{{ ct.role }}</span></td>
+      <td>{{ ct.base_legale }}</td>
+      <td>{{ ct.nb_echanges }}{% if ct.dernier_echange %}<small>dernier : {{ ct.dernier_echange }}</small>{% endif %}</td>
+      <td>{% if ct.oublie_le %}fait le {{ ct.oublie_le[:10] }}{% else %}{{ ct.oubli_prevu }}{% if ct.a_oublier %} <span class="statut statut--a_modifier">échu</span>{% endif %}{% endif %}</td>
+      <td>{% if ct.opposition and not ct.oublie_le %}<span class="statut statut--refusee">opposition</span>{% endif %}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+</section>
+<aside>
+  <section class="bloc">
+    <h2>Nouveau contact</h2>
+    <form method="post" action="/contacts" class="formulaire"><input type="hidden" name="_csrf" value="{{ csrf }}">
+      <label>E-mail <input type="email" name="email" required></label>
+      <label>Nom <input name="nom" maxlength="160"></label>
+      <label>Entreprise <input name="entreprise" maxlength="160"></label>
+      <div class="grille-2">
+        <label>Rôle <select name="role">{% for r in roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}</select></label>
+        <label>Conservation (mois) <input name="conservation_mois" inputmode="numeric" value="36"></label>
+      </div>
+      <label>Base légale (obligatoire) <select name="base_legale" required><option value="">— choisir —</option>{% for k, v in bases.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+      <label>Source (d'où vient ce contact) <input name="source" maxlength="200" placeholder="demande entrante, salon, recommandation"></label>
+      <button class="bouton" type="submit">Créer la fiche</button>
+    </form>
+    <p class="note">Pas d'enrichissement depuis des sources tierces : on note ce que la personne a donné.</p>
+  </section>
+  {% if a_oublier %}
+  <section class="bloc">
+    <h2>À oublier ({{ a_oublier|length }})</h2>
+    <p class="note">Durée de conservation échue. L'oubli anonymise la fiche et efface les résumés ; les dates et les droits restent.</p>
+    <form method="post" action="/contacts/oublier" data-confirmer="Oublier ces contacts ?"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--second" type="submit">Oublier les fiches échues</button></form>
+  </section>
+  {% endif %}
+</aside>
+</div>
+{% endblock %}

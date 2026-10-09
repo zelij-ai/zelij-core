@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block titre %}Bureau{% endblock %}
+{% block contenu %}
+<div class="tete-page">
+  <div><p class="sur-titre">Bureau · {{ mois }}</p><h1>{{ u.organisation }}</h1></div>
+  <div class="compteur {% if plafond_atteint %}compteur--alerte{% endif %}" aria-label="Coût du mois">
+    <strong><span data-compte="{{ '%.2f'|format(depense) }}" data-dec="2">{{ '%.2f'|format(depense) }}</span> €</strong>
+    <div class="compteur-barre" role="img" aria-label="{{ '%.0f'|format(100 * depense / plafond if plafond else 0) }} % du plafond"><i style="--part: {{ '%.0f'|format((100 * depense / plafond) if plafond else 0) }}%"></i></div>
+    <span>sur {{ '%.0f'|format(plafond) }} € ce mois · tarifs relevés le {{ tarifs_le }}</span>
+  </div>
+</div>
+
+<section class="bloc bloc--demande">
+  <h2>Demander à l'équipe</h2>
+  {% if chef %}
+  <p class="note">{{ chef.signature }} prépare un paquet de décision si la demande engage l'entreprise, sinon répond directement. Chaque agent peut être interrogé ; rien ne se fait sans votre validation.</p>
+  <form method="post" action="/demande" class="formulaire formulaire--ligne"><input type="hidden" name="_csrf" value="{{ csrf }}">
+    <label class="grandit">Votre demande <textarea name="texte" rows="2" required maxlength="4000" placeholder="ex. Faut-il ouvrir une page Tarifs sur le site ? Que coûterait une lettre d'information mensuelle ?"></textarea></label>
+    <label>À <select name="agent">{% for f in fiches %}<option value="{{ f.id }}" {% if chef and f.id == chef.id %}selected{% endif %}>{{ f.nom }} · {{ f.fonction }}</option>{% endfor %}</select></label>
+    <button class="bouton" type="submit" {% if plafond_atteint %}disabled{% endif %}>Envoyer</button>
+  </form>
+  {% else %}<p class="encart encart--alerte">La fiche du Chef de cabinet est absente du dossier agents/.</p>{% endif %}
+</section>
+
+<section class="bloc">
+  <h2>Décisions en attente <span class="pastille">{{ en_attente|length }}</span></h2>
+  {% if not en_attente %}<p class="vide">Rien n'attend votre décision. Quand un agent proposera quelque chose qui engage l'entreprise, le paquet complet apparaîtra ici : objectif, options, risques, retour arrière.</p>{% endif %}
+  {% for d in en_attente %}
+  <article class="decision">
+    <header>
+      <span class="auteur"><span class="monogramme" aria-hidden="true">{{ d.demandeur[:1] }}{{ (d.demandeur.split(' ')[1] if ' ' in d.demandeur else '')[:1] }}</span>{{ d.demandeur }}</span>
+      <time datetime="{{ d.cree_le }}">{{ d.cree_le[:16]|replace('T', ' ') }} UTC</time>
+    </header>
+    <h3>{{ d.objectif }}</h3>
+    <p>{{ d.proposition }}</p>
+    {% if d.pourquoi_maintenant %}<p class="small"><strong>Pourquoi maintenant :</strong> {{ d.pourquoi_maintenant }}</p>{% endif %}
+    <div class="chips" aria-label="Options">{% for o in d.options %}<span class="chip {% if o == d.recommandation %}chip--reco{% endif %}">{{ o }}</span>{% endfor %}</div>
+    <p class="small"><strong>Recommandation :</strong> {{ d.recommandation }}</p>
+    {% if d.risques %}<p class="small"><strong>Risques :</strong> {{ d.risques|join(' · ') }}</p>{% endif %}
+    <p class="small"><strong>Réversibilité :</strong> {{ d.reversibilite }}{% if d.impact_eur %} · <strong>impact :</strong> {{ '%.2f'|format(d.impact_eur) }} €{% endif %}</p>
+    {% if d.plan %}<p class="small"><strong>Plan :</strong> {{ d.plan|join(' → ') }}</p>{% endif %}
+    {% if d.retour_arriere %}<p class="small"><strong>Retour arrière :</strong> {{ d.retour_arriere|join(' → ') }}</p>{% endif %}
+    {% if d.agent_cible and d.tache %}<p class="small"><strong>Si vous approuvez :</strong> {{ d.agent_cible }} exécute « {{ d.tache }} » dans les limites du plan, et rend compte ici.</p>{% endif %}
+    <div class="actions">
+      <form method="post" action="/decisions/{{ d.id }}/approuver"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--laiton" type="submit">Approuver</button></form>
+      <form method="post" action="/decisions/{{ d.id }}/refuser" data-confirmer="Refuser cette décision ? L'agent en sera informé."><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--second" type="submit">Refuser</button></form>
+      <details class="changes">
+        <summary class="bouton bouton--second">Demander des changements</summary>
+        <form method="post" action="/decisions/{{ d.id }}/a_modifier" class="formulaire"><input type="hidden" name="_csrf" value="{{ csrf }}">
+          <label for="consigne-{{ d.id }}">Ce que je veux changer (transmis à {{ d.demandeur }}, obligatoire)</label>
+          <textarea id="consigne-{{ d.id }}" name="consigne" rows="3" required placeholder="ex. budget 300 € maximum, retirer l'option 2, revenir avec deux devis"></textarea>
+          <button class="bouton" type="submit">Envoyer la consigne</button>
+        </form>
+      </details>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+
+<div class="deux-colonnes">
+<section>
+  <section class="bloc">
+    <h2>Dernières exécutions</h2>
+    {% if not executions %}<p class="vide">Aucun agent n'a encore travaillé. Posez une première question ci-dessus : la réponse, son coût et ses sources apparaîtront ici.</p>{% endif %}
+    <ul class="liste">
+    {% for e in executions %}
+      <li><span class="statut statut--{{ e.statut }}">{{ e.statut }}</span> <strong>{{ e.agent }}</strong> · {{ e.tache }} <small>{{ e.cree_le[:16]|replace('T', ' ') }} · {{ e.tours }} tour(s) · {{ '%.4f'|format(e.cout_eur) }} €{% if e.detail %} · {{ e.detail }}{% endif %}</small>
+        {% if e.sortie_dict.reponse %}<p class="reponse">{{ e.sortie_dict.reponse }}</p>{% elif e.sortie_dict.texte %}<p class="reponse">{{ e.sortie_dict.texte[:600] }}</p>{% endif %}</li>
+    {% endfor %}
+    </ul>
+  </section>
+  <section class="bloc">
+    <h2>Décisions récentes</h2>
+    {% if not recentes %}<p class="vide">Aucune décision prise pour l'instant.</p>{% endif %}
+    <ul class="liste">{% for d in recentes %}<li><span class="statut statut--{{ d.etat }}">{{ d.etat_libelle }}</span> {{ d.objectif }} <small>{{ (d.decidee_le or '')[:16]|replace('T', ' ') }} · {{ d.decidee_par }}{% if d.consigne %} · consigne : {{ d.consigne }}{% endif %}</small></li>{% endfor %}</ul>
+  </section>
+</section>
+<aside>
+  <section class="bloc">
+    <h2>L'équipe</h2>
+    <ul class="liste">{% for f in fiches %}<li><span class="auteur"><span class="monogramme" aria-hidden="true">{{ f.nom[:1] }}{{ (f.nom.split(' ')[1] if ' ' in f.nom else '')[:1] }}</span><strong>{{ f.nom }}</strong></span> <small>{{ f.fonction }} · {{ f.modele }} · {{ f.budget_tours }} tours au plus</small></li>{% endfor %}</ul>
+  </section>
+  <section class="bloc">
+    <h2>Modules installés</h2>
+    {% if modules %}<ul class="liste">{% for m in modules %}<li><strong>{{ m.nom }}</strong> {{ m.version }} <small>{{ m.type }} · interface {{ m.interface }}</small></li>{% endfor %}</ul>
+    {% else %}<p class="vide">Aucun module. Les cibles de déploiement et les agents supplémentaires s'installent ici, signés par l'éditeur.</p>{% endif %}
+  </section>
+  <section class="bloc">
+    <h2>Journal</h2>
+    <ol class="journal">{% for a in journal %}<li><time>{{ a.cree_le[:16]|replace('T', ' ') }}</time> <strong>{{ a.acteur }}</strong> {{ a.action }}{% if a.detail %} <small>— {{ a.detail[:160] }}</small>{% endif %}</li>{% endfor %}</ol>
+  </section>
+</aside>
+</div>
+{% endblock %}

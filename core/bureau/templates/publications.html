@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titre %}Publications{% endblock %}
+{% block contenu %}
+<div class="tete-page">
+  <div><p class="sur-titre">Pages proposées au site</p><h1>Publications</h1></div>
+</div>
+<p class="note">Une page rédigée par Élise Tanguy (croissance) devient un brouillon, puis une décision. Approuvée, elle part vers votre site comme proposition : demande de fusion sur votre dépôt, ou brouillon WordPress. Le dernier geste, fusionner ou publier, reste le vôtre.
+{% if canal == 'pr' %}Canal configuré : demande de fusion GitHub.{% elif canal == 'wordpress' %}Canal configuré : brouillon WordPress.{% else %}<strong>Aucun canal configuré</strong> : posez <code>SITE_DEPOT</code> et <code>GITHUB_TOKEN</code> (jeton restreint à ce dépôt), ou <code>WP_URL</code>, <code>WP_USER</code> et <code>WP_APP_PASSWORD</code>.{% endif %}</p>
+{% if not publications %}<p class="vide">Aucune page proposée pour l'instant. Demandez une page à Élise Tanguy depuis le bureau.</p>
+{% else %}
+<div class="tableau-cadre"><table class="tableau">
+  <thead><tr><th>Page</th><th>État</th><th>Canal</th><th>Référence</th><th>Créée</th></tr></thead>
+  <tbody>{% for p in publications %}
+  <tr>
+    <td><span class="fort">{{ p.titre }}</span><small>{{ p.slug }}</small></td>
+    <td><span class="statut statut--{{ 'terminee' if p.etat == 'proposee' or p.etat == 'en_ligne' else ('echec' if p.etat == 'echec' else 'en_cours') }}">{{ p.etat_libelle }}</span></td>
+    <td>{{ p.canal or '—' }}</td>
+    <td>{% if p.reference %}<a href="{{ p.reference }}" rel="noopener" target="_blank">ouvrir</a>{% endif %}{% if p.detail %}<small>{{ p.detail }}</small>{% endif %}</td>
+    <td>{{ p.cree_le[:10] }}</td>
+  </tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+{% endblock %}

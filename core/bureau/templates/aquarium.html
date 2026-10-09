@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block titre %}Aquarium{% endblock %}
+{% block contenu %}
+<div class="tete-page">
+  <div><p class="sur-titre">Regardez vos agents travailler</p><h1>L'aquarium</h1></div>
+  <div class="actions">
+    {% if jeton %}
+    <a class="bouton bouton--second" href="/vitrine/{{ jeton }}" target="_blank" rel="noopener">Ouvrir la page publique</a>
+    <form method="post" action="/vitrine/fermer" data-confirmer="Couper le lien public ? L'ancien lien ne fonctionnera plus."><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--second" type="submit">Couper le lien</button></form>
+    {% else %}
+    <form method="post" action="/vitrine/ouvrir"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--laiton" type="submit">Créer la page publique</button></form>
+    {% endif %}
+  </div>
+</div>
+<p class="note">Chaque carte est une action réelle des dernières 24 heures : une demande, un outil appelé, une décision proposée ou prise. Les anneaux en pointillé sont des postes libres : cliquez-en un pour voir ce que ferait cet agent chez vous. Survolez un agent pour son détail.</p>
+
+<section class="scene" aria-label="Scène des agents">
+  <div class="scene-horloge" aria-live="off"><strong id="aq-horloge">--:--:--</strong><span id="aq-sous">DIRECT</span></div>
+  <canvas id="aquarium" data-source="/api/aquarium" role="img" aria-label="Aquarium des agents : {{ etat.agents|length }} agents, {{ etat.executions }} actions sur 24 heures, {{ etat.decisions_en_attente }} décision(s) en attente"></canvas>
+  <div class="scene-commandes">
+    <button id="aq-pause" class="bouton bouton--laiton bouton--petit" type="button" aria-pressed="false">▶ Rejouer les 24 h</button>
+    <button id="aq-direct" class="bouton bouton--second bouton--petit scene-direct" type="button">● Direct</button>
+    <label class="scene-temps">Ligne de temps <input id="aq-temps" type="range" min="0" max="100" value="100" step="1000"></label>
+    <label class="scene-vitesse">Vitesse <select id="aq-vitesse"><option value="10">×10</option><option value="60" selected>×60</option><option value="300">×300</option><option value="1800">×1800</option></select></label>
+  </div>
+</section>
+{% if jeton %}<p class="note">Lien public à partager sur votre site : <code>{{ origine }}/vitrine/{{ jeton }}</code>. Même scène, titres et comptes seulement, aucun détail interne, badge « by zelij.ai ».</p>{% endif %}
+
+<div class="deux-colonnes">
+<section>
+  <section class="bloc">
+    <h2>Dans le bassin</h2>
+    <ul class="liste">{% for a in etat.agents %}<li><span class="statut {% if a.actif %}statut--terminee{% else %}statut--en_cours{% endif %}">{% if a.actif %}actif{% else %}calme{% endif %}</span> <strong>{{ a.nom }}</strong> · {{ a.fonction }} <small>{{ a.activite }} action(s) sur 24 h · {{ '%.3f'|format(a.cout_eur) }} €{% if a.dernier %} · dernière le {{ a.dernier[:16]|replace('T', ' ') }}{% endif %}</small></li>{% endfor %}</ul>
+    <p class="note">Un portrait par agent : déposez <code>agents/&lt;identifiant&gt;/portrait.webp</code> (carré, 256 px) et il remplace le monogramme dans le bassin.</p>
+  </section>
+  <section class="bloc">
+    <h2>Fil des 24 heures</h2>
+    {% if not etat.evenements %}<p class="vide">Rien ces 24 dernières heures. Posez une question au bureau : elle apparaîtra ici et dans le bassin.</p>{% else %}
+    <ol class="journal">{% for e in etat.evenements[-25:]|reverse %}<li><time>{{ e.t[11:16] }}</time> <strong>{{ e.acteur }}</strong>{% if e.cible %} → {{ e.cible }}{% endif %} <small>{{ e.texte }}</small></li>{% endfor %}</ol>{% endif %}
+  </section>
+</section>
+<aside>
+  {% for p in postes %}
+  <section class="bloc poste" id="poste-{{ p.id }}">
+    <h2><span class="monogramme" aria-hidden="true">?</span>{{ p.nom }}</h2>
+    <p class="note">{{ p.resume }}</p>
+    <ul class="liste liste--serree">{% for f in p.fait %}<li>{{ f }}</li>{% endfor %}</ul>
+    <a class="bouton bouton--second bouton--petit" href="/catalogue#pack-{{ p.id }}">Voir dans le catalogue</a>
+  </section>
+  {% endfor %}
+</aside>
+</div>
+<script src="/static/aquarium.js?v={{ VERSION }}" defer></script>
+{% endblock %}

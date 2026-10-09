@@ -1,0 +1,48 @@
+# Zelij Core en une commande : `cp .env.example .env`, remplir, puis `docker compose up -d --build`.
+# Le bureau écoute sur le port 8000 de la machine. Pour l'https, ajoutez docker-compose.tls.yml (Caddy, certificat automatique) : voir docs/INSTALLATION.md.
+name: zelij-core
+services:
+  core-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: core
+      POSTGRES_USER: core
+      POSTGRES_PASSWORD: ${CORE_DB_PASSWORD:?CORE_DB_PASSWORD manquant dans .env}
+    volumes:
+      - core-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U core -d core"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  core-app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://core:${CORE_DB_PASSWORD}@core-db:5432/core
+      SAUVEGARDES_DIR: /data/sauvegardes
+      ZELIJ_MODULES_DIR: /srv/app/modules
+    # Durcissement : utilisateur sans privilège (image), rien d'inscriptible hors des volumes et de /tmp, aucune capacité, pas d'élévation.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+      - /home/core:size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - core-sauvegardes:/data/sauvegardes
+      - core-modules:/srv/app/modules
+      - ./portraits:/srv/app/portraits:ro     # vos photos (fondateur.webp, <agent>.webp), voir portraits/README.md
+    ports:
+      - "${CORE_PORT:-8000}:8000"
+    depends_on:
+      core-db:
+        condition: service_healthy
+
+volumes:
+  core-db:
+  core-sauvegardes:
+  core-modules:

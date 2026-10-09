@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titre %}Catalogue{% endblock %}
+{% block contenu %}
+<div class="tete-page">
+  <div><p class="sur-titre">Ce que l'édition gratuite ne contient pas</p><h1>Catalogue</h1></div>
+</div>
+<p class="note">L'édition gratuite reste utilisable pour toujours avec ses quatre agents. Les modules ci-dessous s'achètent chez l'éditeur, qui remet un module signé ; il s'installe ici, par son manifeste, après vérification de la signature. Aucun paiement ne passe par ce bureau.</p>
+
+<div class="packs">
+{% for p in packs %}
+  <article class="bloc pack" id="pack-{{ p.id }}">
+    <h2><span class="monogramme" aria-hidden="true">{% if p.poste %}?{% else %}+{% endif %}</span>{{ p.nom }} <small>{{ p.type }}</small></h2>
+    <p>{{ p.resume }}</p>
+    <ul class="liste liste--serree">{% for f in p.fait %}<li>{{ f }}</li>{% endfor %}</ul>
+    <a class="bouton bouton--laiton" href="{{ liens[p.id] }}" rel="noopener">Voir l'offre chez l'éditeur</a>
+  </article>
+{% endfor %}
+</div>
+
+<div class="deux-colonnes">
+<section class="bloc">
+  <h2>Installer un module signé</h2>
+  <p class="note">Déposez le manifeste <code>pack.json</code> remis par l'éditeur. Il n'est accepté que signé par la clé publique de l'éditeur (<code>ZELIJ_CLE_PUBLIQUE</code>) et compatible avec l'interface {{ interface }} de ce noyau.</p>
+  <form method="post" action="/modules/installer" enctype="multipart/form-data" class="formulaire"><input type="hidden" name="_csrf" value="{{ csrf }}">
+    <label>Manifeste <input type="file" name="manifeste" accept=".json,application/json" required></label>
+    <button class="bouton" type="submit">Vérifier et installer</button>
+  </form>
+  {% if not cle_presente %}<p class="encart encart--alerte">La clé publique de l'éditeur n'est pas posée dans l'environnement : aucun module ne peut être vérifié.</p>{% endif %}
+</section>
+<aside class="bloc">
+  <h2>Modules installés</h2>
+  {% if modules %}<ul class="liste">{% for m in modules %}<li><strong>{{ m.nom }}</strong> {{ m.version }} <small>{{ m.type }} · interface {{ m.interface }} · {{ m.installe_le[:10] }}</small></li>{% endfor %}</ul>
+  {% else %}<p class="vide">Aucun module installé.</p>{% endif %}
+  <p class="note">Identifiant de cette installation, à donner à l'éditeur : <code>{{ instance }}</code></p>
+</aside>
+</div>
+{% endblock %}

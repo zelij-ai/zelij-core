@@ -1,0 +1,25 @@
+# Mise en ligne en https : `docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d --build`.
+# Un serveur Caddy devant le bureau : certificat automatique pour CORE_DOMAINE (ports 80 et 443 ouverts, domaine pointant
+# vers la machine), renouvellement automatique, redirection de http vers https. Le port 8000 n'est plus publié.
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      CORE_DOMAINE: ${CORE_DOMAINE:?CORE_DOMAINE manquant dans .env (ex. bureau.votre-domaine.fr)}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - core-app
+
+  core-app:
+    ports: !reset []
+
+volumes:
+  caddy-data:
+  caddy-config:

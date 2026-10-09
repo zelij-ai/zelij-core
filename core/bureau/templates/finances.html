@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block titre %}Finances{% endblock %}
+{% block contenu %}
+<div class="tete-page">
+  <div><p class="sur-titre">Comptabilité légère</p><h1>Finances · {{ j.mois }}</h1></div>
+  <form method="get" action="/finances" class="formulaire formulaire--ligne">
+    <label>Mois <input type="month" name="mois" value="{{ j.mois }}"></label>
+    <button class="bouton bouton--second" type="submit">Voir</button>
+  </form>
+</div>
+
+<section class="mesures" aria-label="Totaux du mois">
+  <article><strong>{{ '%.2f'|format(j.total_ventes) }} €</strong><span>ventes confirmées ({{ j.ventes|length }})</span></article>
+  <article><strong>{{ '%.2f'|format(j.total_charges) }} €</strong><span>charges déclarées</span></article>
+  <article><strong>{{ '%.2f'|format(j.total_agents) }} €</strong><span>coût des agents</span></article>
+  <article class="{% if j.solde < 0 %}alerte{% endif %}"><strong>{{ '%.2f'|format(j.solde) }} €</strong><span>solde du mois</span></article>
+</section>
+<p class="note">Une vente n'existe que confirmée par la plateforme de paiement (ou saisie avec sa preuve). Les charges récurrentes reviennent chaque mois à leur date. Le coût des agents est mesuré sur chaque appel (taux {{ j.taux_usd_eur }} €/$). Rien n'est déclaré ni facturé ici : <a href="/finances/export?mois={{ j.mois }}">l'export CSV</a> part chez votre expert-comptable.</p>
+
+<div class="deux-colonnes">
+<section>
+  <section class="bloc">
+    <h2>Ventes</h2>
+    {% if not j.ventes %}<p class="vide">Aucune vente confirmée ce mois.</p>{% else %}
+    <div class="tableau-cadre"><table class="tableau"><thead><tr><th>Date</th><th>Libellé</th><th>Client</th><th>Source</th><th class="num">Montant</th></tr></thead>
+    <tbody>{% for v in j.ventes %}<tr><td>{{ v.date }}</td><td>{{ v.libelle }}</td><td>{{ v.client }}</td><td><span class="puce">{{ v.source }}</span></td><td class="num">{{ '%.2f'|format(v.montant_eur) }} €</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+  </section>
+  <section class="bloc">
+    <h2>Charges du mois</h2>
+    {% if not j.charges %}<p class="vide">Aucune charge ce mois. Déclarez vos abonnements, domaines et hébergements : ils reviendront chaque mois.</p>{% else %}
+    <div class="tableau-cadre"><table class="tableau"><thead><tr><th>Date</th><th>Libellé</th><th>Catégorie</th><th>Périodicité</th><th class="num">Montant</th></tr></thead>
+    <tbody>{% for ch in j.charges %}<tr><td>{{ ch.date }}</td><td>{{ ch.libelle }}{% if ch.piece %}<small>pièce : {{ ch.piece }}</small>{% endif %}</td><td>{{ ch.categorie }}</td><td>{{ ch.periodicite }}</td><td class="num">{{ '%.2f'|format(ch.montant_eur) }} €</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+  </section>
+  <section class="bloc">
+    <h2>Coût des agents</h2>
+    {% if not j.agents %}<p class="vide">Aucun appel ce mois.</p>{% else %}
+    <ul class="liste">{% for a in j.agents %}<li><strong>{{ a.agent }}</strong> · {{ a.n }} exécution(s) <small>{{ '%.2f'|format(a.eur) }} €</small></li>{% endfor %}</ul>{% endif %}
+  </section>
+</section>
+<aside>
+  <section class="bloc">
+    <h2>Importer les ventes Stripe</h2>
+    {% if stripe_pret %}
+    <form method="post" action="/finances/stripe" class="formulaire"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton" type="submit">Importer les paiements confirmés</button></form>
+    <p class="note">Clé restreinte en lecture, dans le fichier d'environnement. Réimporter ne double jamais une vente.</p>
+    {% else %}<p class="note">Posez une clé Stripe <em>restreinte en lecture</em> dans <code>STRIPE_SECRET_KEY</code> pour importer les paiements confirmés.</p>{% endif %}
+  </section>
+  <section class="bloc">
+    <h2>Saisir une vente avec preuve</h2>
+    <form method="post" action="/finances/ventes" class="formulaire"><input type="hidden" name="_csrf" value="{{ csrf }}">
+      <label>Date <input type="date" name="date" required></label>
+      <label>Libellé <input name="libelle" required maxlength="200"></label>
+      <label>Client <input name="client" maxlength="200"></label>
+      <label>Montant TTC encaissé (€) <input name="montant_eur" inputmode="decimal" required></label>
+      <label>Preuve (référence du virement, du reçu) <input name="reference" required maxlength="120"></label>
+      <button class="bouton bouton--second" type="submit">Enregistrer</button>
+    </form>
+  </section>
+  <section class="bloc">
+    <h2>Déclarer une charge</h2>
+    <form method="post" action="/finances/charges" class="formulaire"><input type="hidden" name="_csrf" value="{{ csrf }}">
+      <label>Date de début <input type="date" name="date" required></label>
+      <label>Libellé <input name="libelle" required maxlength="200" placeholder="Hébergement, nom de domaine, abonnement…"></label>
+      <label>Montant (€) <input name="montant_eur" inputmode="decimal" required></label>
+      <div class="grille-2">
+        <label>Catégorie <select name="categorie">{% for k in categories %}<option value="{{ k }}">{{ k }}</option>{% endfor %}</select></label>
+        <label>Périodicité <select name="periodicite">{% for k in periodicites %}<option value="{{ k }}">{{ k }}</option>{% endfor %}</select></label>
+      </div>
+      <label>Jusqu'au (facultatif) <input type="date" name="jusqu_a"></label>
+      <label>Pièce (facultatif) <input name="piece" maxlength="200" placeholder="numéro de facture"></label>
+      <button class="bouton bouton--second" type="submit">Déclarer</button>
+    </form>
+  </section>
+</aside>
+</div>
+{% endblock %}

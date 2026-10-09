@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Regardez nos agents travailler — {{ organisation }}</title>
+<meta name="description" content="{{ organisation }} travaille avec des agents d'IA qui proposent et un fondateur qui décide. Chaque bulle est une action réelle.">
+<link rel="stylesheet" href="/static/app.css?v={{ VERSION }}">
+</head>
+<body>
+<header class="entete">
+  <span class="marque"><span class="marque-carreau" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 6.4L21 12l-6.4 3.6L12 22l-2.6-6.4L3 12l6.4-3.6z" fill="#fff" opacity=".95"/><circle cx="12" cy="12" r="2.2" fill="#1c1917"/></svg></span>{{ organisation }}</span>
+  <div class="compte"><a class="lien" href="https://zelij.ai/" rel="noopener">by zelij.ai</a></div>
+</header>
+<main id="contenu" class="cadre">
+  <p class="sur-titre">Regardez nos agents travailler</p>
+  <h1>Ils proposent, nous décidons.</h1>
+  <p class="intro">Chez {{ organisation }}, des agents d'IA préparent le travail : contenu, finances, suivi des clients, site. Rien ne se fait sans une décision humaine. Chaque bulle ci-dessous est une action réelle des dernières 24 heures.</p>
+  <section class="scene" aria-label="Scène des agents">
+    <div class="scene-horloge" aria-live="off"><strong id="aq-horloge">--:--:--</strong><span id="aq-sous">DIRECT</span></div>
+    <canvas id="aquarium" data-source="/api/vitrine/{{ jeton }}" role="img" aria-label="Aquarium des agents de {{ organisation }}"></canvas>
+    <div class="scene-commandes">
+      <button id="aq-pause" class="bouton bouton--laiton bouton--petit" type="button" aria-pressed="false">▶ Rejouer les 24 h</button>
+      <button id="aq-direct" class="bouton bouton--second bouton--petit scene-direct" type="button">● Direct</button>
+      <label class="scene-temps">Ligne de temps <input id="aq-temps" type="range" min="0" max="100" value="100" step="1000"></label>
+      <label class="scene-vitesse">Vitesse <select id="aq-vitesse"><option value="10">×10</option><option value="60" selected>×60</option><option value="300">×300</option><option value="1800">×1800</option></select></label>
+    </div>
+  </section>
+  <div class="mesures" aria-label="Chiffres du jour">
+    <article><strong>{{ etat.agents|length }}</strong><span>agents au travail</span></article>
+    <article><strong>{{ etat.executions }}</strong><span>actions sur 24 h</span></article>
+    <article><strong>{{ etat.decisions_en_attente }}</strong><span>décisions en attente du fondateur</span></article>
+    <article><strong>{{ '%.2f'|format(etat.cout_jour_eur) }} €</strong><span>coût des agents sur 24 h</span></article>
+  </div>
+  <p class="note">Montez votre startup 100 % native IA : le même bureau, en édition gratuite, chez <a href="https://zelij.ai/" rel="noopener">zelij.ai</a>.</p>
+</main>
+<footer class="pied"><p>Page publique de {{ organisation }} · propulsée par Zelij Core · <a href="https://zelij.ai/" rel="noopener">by zelij.ai</a></p></footer>
+<script src="/static/aquarium.js?v={{ VERSION }}" defer></script>
+</body>
+</html>

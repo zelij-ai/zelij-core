@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block titre %}Connexion{% endblock %}
+{% block contenu %}
+<section class="connexion">
+  <p class="sur-titre">Votre bureau</p>
+  <h1>Entrer</h1>
+  <p class="intro">Pas de mot de passe : vous recevez un lien à usage unique, valable vingt minutes. La première adresse crée l'espace de votre entreprise.</p>
+  <form method="post" action="/connexion" class="formulaire">
+    <label for="email">Adresse e-mail</label>
+    <input id="email" name="email" type="email" autocomplete="email" required inputmode="email" placeholder="vous@votre-entreprise.fr">
+    <button class="bouton" type="submit">Recevoir le lien</button>
+  </form>
+</section>
+{% endblock %}
