@@ -213,6 +213,13 @@ INSTRUCTION_DEMANDE = (
     "paquet de décision complet ; indique dans `agent_cible` l'identifiant de l'agent qui exécutera le plan une fois approuvé (toi-même "
     "si c'est ton métier) et dans `tache` la consigne précise qu'il recevra. Sinon, réponds directement et dis ce que tu as fait ou ce "
     "que tu proposes de faire.\n"
+    "Modules disponibles chez l'éditeur (ce que ce bureau ne contient pas) :\n{catalogue}\n"
+    "Si la demande relève d'un de ces modules (déploiement cloud, prospection, SEO et GEO, veille des prix, surveillance, usine logicielle, "
+    "hébergement), ouvre un paquet « construire soi-même ou installer le module » avec deux options réelles au moins : "
+    "« Installer le module <nom> » (le fondateur l'achète chez l'éditeur, prix affiché là-bas ; mets `tache` à `catalogue:<identifiant>` "
+    "et `agent_cible` à ton identifiant) et « Construire soi-même avec le Bâtisseur » (estime honnêtement le temps en jours, rappelle ses bornes : "
+    "un seul dépôt, 300 lignes par demande de fusion, pas de backend, pas de nouveau service ; mets `agent_cible` à `batisseur` et `tache` à la consigne de construction). "
+    "Recommande selon le temps du fondateur et la complexité, sans inventer de prix.\n"
     'Réponds en JSON strict : {{"decision_requise": true|false, "reponse": "ce que tu dis au fondateur", '
     '"objectif": "…", "proposition": "…", "pourquoi_maintenant": "…", "options": ["…", "…"], "recommandation": "…", '
     '"risques": ["…"], "reversibilite": "reversible|partielle|irreversible", "plan": ["…"], "retour_arriere": ["…"], "impact_eur": 0, '
@@ -247,8 +254,10 @@ def demande(request: Request, texte: str = Form(""), agent: str = Form("")):
         if fiche is None:
             return Response("fiche du Chef de cabinet absente", status_code=500)
         gouvernance.journaliser(c, u["org_id"], u["email"], "demande", fiche.id, texte)
+        from core import catalogue as _catalogue
+
         res = app.state.executeur.executer(c, u["org_id"], fiche, tache="demande-fondateur",
-                                           instruction=INSTRUCTION_DEMANDE.format(demande=texte, equipe=_equipe(fiches)),
+                                           instruction=INSTRUCTION_DEMANDE.format(demande=texte, equipe=_equipe(fiches), catalogue=_catalogue.pour_agent()),
                                            contexte={"organisation": u["organisation"], "fondateur": u["email"]})
         if res["statut"] == "refusee" and "plafond" in res.get("detail", ""):
             return _rediriger("/bureau", "plafond")
@@ -302,11 +311,23 @@ def decider(request: Request, decision_id: str, action: str, consigne: str = For
             return Response(texte, status_code=400)
         if d["etat"] == "approuvee" and d.get("agent_cible") and d.get("tache"):
             _executer_apres_approbation(c, u, d)
+    if d["etat"] == "approuvee" and str(d.get("tache") or "").startswith("catalogue:"):
+        from core import catalogue as _catalogue
+
+        pack = d["tache"].split(":", 1)[1].strip()
+        return _rediriger("/catalogue" + (f"?pack={pack}" if _catalogue.est_pack(pack) else ""), "catalogue_module")
     return _rediriger("/bureau", d["etat"])
 
 
 def _executer_apres_approbation(c: db.Connexion, u: dict, d: dict) -> None:
     """Une décision approuvée qui désigne un agent et une tâche se met en route aussitôt, dans les limites du plan approuvé."""
+    if d["tache"].startswith("catalogue:"):
+        # « Installer le module » : rien ne s'achète ici ; le bureau note la décision et conduit le fondateur au catalogue, lien d'achat prêt.
+        from core import catalogue as _catalogue
+
+        pack = d["tache"].split(":", 1)[1].strip()
+        gouvernance.journaliser(c, u["org_id"], "bureau", "catalogue.module", d["id"], f"décision d'installer le module {pack} : achat chez l'éditeur" if _catalogue.est_pack(pack) else f"module inconnu {pack[:40]}")
+        return
     if d["tache"].startswith("publier:"):
         from core import publication
 
@@ -518,6 +539,7 @@ MESSAGES.update({
     "vitrine": "Page publique créée : le lien est prêt à partager.", "vitrine_fermee": "Lien public coupé.",
     "module": "Module vérifié et installé.", "module_refus": "Module refusé : signature absente ou invalide, ou interface incompatible.",
     "manifeste": "Manifeste illisible.",
+    "catalogue_module": "Décision approuvée : le module s'achète chez l'éditeur, son lien est prêt ci-dessous ; une fois le colis reçu, installez-le ici.",
 })
 
 
@@ -594,7 +616,7 @@ def vitrine_api(jeton: str):
 
 
 @app.get("/catalogue", response_class=HTMLResponse)
-def catalogue_page(request: Request):
+def catalogue_page(request: Request, pack: str = ""):
     from core import INTERFACE_MODULES, catalogue
 
     with db.connexion() as c:
@@ -603,7 +625,8 @@ def catalogue_page(request: Request):
             return refus
         instance = u["org_id"][:12]
         return _page(request, "catalogue.html", u=u, packs=catalogue.PACKS, liens={p["id"]: catalogue.lien_achat(p["id"], instance) for p in catalogue.PACKS},
-                     modules=modules.installes(c, u["org_id"]), interface=INTERFACE_MODULES, cle_presente=bool(modules.cle_publique_editeur()), instance=instance)
+                     modules=modules.installes(c, u["org_id"]), interface=INTERFACE_MODULES, cle_presente=bool(modules.cle_publique_editeur()), instance=instance,
+                     cible=pack if catalogue.est_pack(pack) else "")
 
 
 @app.post("/modules/installer")

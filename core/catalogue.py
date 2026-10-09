@@ -43,3 +43,16 @@ def lien_achat(pack_id: str, instance: str) -> str:
 
 def par_id(pack_id: str) -> dict | None:
     return next((p for p in PACKS if p["id"] == pack_id), None)
+
+
+def pour_agent() -> str:
+    """Le catalogue tel que le Chef de cabinet le connaît : identifiant, nom, ce que fait le module. Sans prix : les prix vivent
+    chez l'éditeur. Sert à proposer « installer le module » quand une demande dépasse ce bureau."""
+    lignes = []
+    for p in PACKS:
+        lignes.append(f"- {p['id']} ({p['type']}) : {p['nom']} — {p['resume']} Fait : {' ; '.join(p['fait'][:3])}.")
+    return "\n".join(lignes)
+
+
+def est_pack(pack_id: str) -> bool:
+    return par_id(pack_id) is not None

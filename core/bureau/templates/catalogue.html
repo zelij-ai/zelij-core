@@ -8,11 +8,12 @@
 
 <div class="packs">
 {% for p in packs %}
-  <article class="bloc pack" id="pack-{{ p.id }}">
+  <article class="bloc pack{% if p.id == cible %} pack--cible{% endif %}" id="pack-{{ p.id }}"{% if p.id == cible %} aria-current="true"{% endif %}>
     <h2><span class="monogramme" aria-hidden="true">{% if p.poste %}?{% else %}+{% endif %}</span>{{ p.nom }} <small>{{ p.type }}</small></h2>
     <p>{{ p.resume }}</p>
     <ul class="liste liste--serree">{% for f in p.fait %}<li>{{ f }}</li>{% endfor %}</ul>
-    <a class="bouton bouton--laiton" href="{{ liens[p.id] }}" rel="noopener">Voir l'offre chez l'éditeur</a>
+    {% if p.id == cible %}<p class="encart">Décidé dans votre bureau : ce module est à acheter chez l'éditeur ; le colis signé s'installe ensuite ci-dessous.</p>{% endif %}
+    <a class="bouton bouton--laiton" href="{{ liens[p.id] }}" rel="noopener">{% if p.id == cible %}Acheter le module chez l'éditeur{% else %}Voir l'offre chez l'éditeur{% endif %}</a>
   </article>
 {% endfor %}
 </div>

@@ -2,6 +2,12 @@
 
 Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il y a quelque chose à faire. Les correctifs de sécurité sont marqués **sécurité**.
 
+## 0.7.3 — 2026-10-09
+
+- Le Chef de cabinet connaît le catalogue : une demande qui dépasse le bureau ouvre un paquet « construire soi-même ou installer le module », avec le temps du Bâtisseur en face du module de l'éditeur. Approuver l'option module conduit au catalogue, lien d'achat prêt ; rien ne s'achète dans le bureau.
+- `SECURITY.md` : réponse à chaque signalement dans l'ordre d'arrivée, sans délai annoncé. README anglais complet.
+- Rien à faire après mise à jour.
+
 ## 0.7.2 — 2026-10-09
 
 - Dépôt public ouvert aux contributions : `CONTRIBUTING.md` (dont la règle « cible contribuée, pack gratuit à vie »), `SECURITY.md`, règles de bonne conduite, gabarits d'issues et de demandes de fusion.
