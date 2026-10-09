@@ -1,28 +1,26 @@
 # Zelij Core
 
+**Français** · [English (US)](README.en.md)
+
 [![ci](https://github.com/zelij-ai/zelij-core/actions/workflows/ci.yml/badge.svg)](https://github.com/zelij-ai/zelij-core/actions/workflows/ci.yml) [![version](https://img.shields.io/github/v/release/zelij-ai/zelij-core?label=version)](https://github.com/zelij-ai/zelij-core/releases) [![licence](https://img.shields.io/badge/licence-AGPL--3.0-1c1917)](LICENSE)
 
-**Montez votre startup 100 % native IA.** Un bureau où des agents travaillent pour vous : ils proposent, vous décidez.
+**Montez votre startup 100 % native IA.** Un bureau où quatre agents travaillent pour vous : ils proposent, vous décidez. Votre machine, votre clé Claude, vos données ; rien ne téléphone à personne.
 
-> Dépôt privé de préparation (décision du 08/10/2026). Rien n'est publié tant que le contrôle de publication ne passe pas et que la publication n'est pas décidée. Licence : GNU AGPL v3.
-
-## Ce que fait le noyau (lot 1)
+## Ce que fait le noyau
 
 - **Le bureau** : une page. Les décisions qui attendent, une demande au Chef de cabinet, les dernières exécutions avec leur coût, le journal, les agents, les modules installés.
 - **Le paquet de décision** : objectif, proposition, pourquoi maintenant, options, recommandation, risques, réversibilité, plan, retour arrière, impact. Un paquet incomplet ne s'ouvre pas. Approuver, refuser, ou demander des changements avec une consigne obligatoire transmise à l'agent.
 - **Les règles de la maison** : rien de ce qui engage (argent, exposition publique, suppression, irréversible) ne se fait sans décision ; un fait est daté et sourcé ou marqué « non vérifié » ; le journal ne s'efface pas.
 - **La passerelle** : la clé Claude du fondateur, le coût de chaque appel calculé depuis l'usage et les tarifs publics datés, un plafond mensuel qui bloque.
-- **L'exécuteur** : une boucle d'appel bornée (budget de tours par agent), des outils sobres (`lire_page`, `date_du_jour`), un refus du modèle traité comme un résultat.
-- **Les modules** : la seule façon d'étendre le noyau. Interface stable, manifeste `pack.json` signé Ed25519 par l'éditeur, vérification avant installation. Les cibles de déploiement et les agents supplémentaires passent par là.
+- **L'exécuteur** : une boucle d'appel bornée (budget de tours par agent), des outils sobres, un refus du modèle traité comme un résultat.
+- **Les modules** : la seule façon d'étendre le noyau. Interface stable, manifeste `pack.json` signé Ed25519 par l'éditeur, empreinte de chaque fichier couverte par la signature, vérification avant installation. Les cibles de déploiement et les agents supplémentaires passent par là.
 - **Finances** : ventes confirmées (import Stripe en lecture ou saisie avec preuve), charges déclarées qui reviennent chaque mois, coût des agents mesuré, journal du mois, export CSV pour l'expert-comptable. Rien n'est déclaré ni facturé.
 - **Contacts** : une fiche par personne, base légale obligatoire, durée de conservation, échanges, droits exercés ; un contact opposé ne reçoit plus rien, un contact échu est oublié et seul le journal des droits reste.
-- **Publication** : une page rédigée par Croissance devient un brouillon, puis une décision ; approuvée, elle est proposée au site comme demande de fusion GitHub ou brouillon WordPress. Le dernier geste, fusionner ou publier, est le vôtre.
-- **Aquarium** : regardez vos agents travailler, chaque bulle est une action réelle des dernières 24 heures ; les silhouettes en pointillé sont des postes libres. Une page publique partageable, badge « by zelij.ai ».
-- **Catalogue** : ce que l'édition gratuite ne contient pas, nommé honnêtement ; un module acheté chez l'éditeur s'installe ici, signé et vérifié. Aucun paiement ne passe par le bureau.
-- **Software factory** : le Bâtisseur lit et propose sur un seul dépôt par demandes de fusion passées par la porte de sécurité (300 lignes, texte seulement, aucun secret, aucun fichier d'infrastructure, dépendances sans vulnérabilité connue via OSV) ; mise en ligne sur un serveur Linux en SSH ou chez OVH (domaine et DNS par l'API) avec bascule atomique, test de fumée et retour arrière ; sonde du domaine ; sauvegarde quotidienne du bureau. Il ne fusionne jamais, ne paie jamais, ne touche jamais au bureau.
-- **Les agents** : un dossier par agent, un `agent.md` avec un en-tête simple et des consignes en français. Quatre agents : Camille Aubert (chef-de-cabinet), Élise Tanguy (croissance), Nour Bellamy (finances-clients), Sacha Ferrand (batisseur). Le fondateur s'adresse à chacun depuis le bureau ; un paquet approuvé qui désigne un agent et une tâche s'exécute aussitôt, dans les limites du plan. Les registres de compta et de contacts (lot 3) et les outils du Bâtisseur (lot 5) ne sont pas encore branchés : les fiches le disent et les agents ne prétendent pas faire ce qu'ils ne peuvent pas faire.
-
-Guide : `docs/premiere-semaine.md`. English summary: `README.en.md`.
+- **Publication** : une page rédigée par l'agent marketing devient un brouillon, puis une décision ; approuvée, elle est proposée au site comme demande de fusion GitHub ou brouillon WordPress. Le dernier geste, fusionner ou publier, est le vôtre.
+- **Aquarium** : regardez vos agents travailler, chaque bulle est une action réelle des dernières 24 heures ; les anneaux en pointillé sont des postes libres. Une page publique partageable, badge « by zelij.ai ».
+- **Catalogue** : ce que l'édition libre ne contient pas, nommé honnêtement ; un module acheté chez l'éditeur s'installe ici, signé et vérifié. Aucun paiement ne passe par le bureau.
+- **Software factory** : le Bâtisseur lit et propose sur un seul dépôt, par demandes de fusion passées par la porte de sécurité (300 lignes, texte seulement, aucun secret, aucun fichier d'infrastructure, dépendances sans vulnérabilité connue via OSV) ; mise en ligne sur un serveur Linux en SSH ou chez OVH (domaine et DNS par l'API) avec bascule atomique, test de fumée et retour arrière ; sonde du domaine ; sauvegarde quotidienne du bureau. Il ne fusionne jamais, ne paie jamais, ne touche jamais au bureau.
+- **Les agents** : un dossier par agent, un `agent.md` avec un en-tête simple et des consignes en français. Quatre agents : Camille Aubert (chef-de-cabinet), Élise Tanguy (croissance, marketing et produits), Nour Bellamy (finances-clients), Sacha Ferrand (batisseur, software factory). Le fondateur s'adresse à chacun depuis le bureau ; un paquet approuvé qui désigne un agent et une tâche s'exécute aussitôt, dans les limites du plan.
 
 ## Démarrer
 
@@ -68,7 +66,7 @@ Ce que le noyau garantit, et qui est testé (`tests/test_securite.py`) :
 - **Conteneur** : utilisateur sans privilège, système de fichiers en lecture seule, aucune capacité, pas d'élévation ; la clé du serveur SSH peut être imposée (`SSH_CLE_HOTE`).
 - **Export comptable** : les cellules qui ressemblent à une formule de tableur sont neutralisées.
 
-Signaler une faille : `securite@zelij.ai`, sans la publier avant correction. Avant chaque publication, `pip-audit -r requirements.txt` et `bandit -r core scripts -ll` doivent être vides.
+Signaler une faille : `securite@zelij.ai`, sans la publier avant correction. Avant chaque version, `pip-audit -r requirements.txt` et `bandit -r core scripts -ll` doivent être vides.
 
 ## Contribuer et suivre les versions
 
@@ -81,10 +79,10 @@ python -m pytest -q
 python scripts/controle_publication.py
 ```
 
-Le contrôle de publication refuse clés, adresses IP, codes d'agents de l'éditeur, adresses personnelles, mots de passe en clair, et les termes d'une liste privée (`ZELIJ_CORE_INTERDITS`) qui ne fait jamais partie du dépôt.
+Le contrôle de publication refuse clés, adresses IP, codes internes, adresses personnelles, mots de passe en clair, et les termes d'une liste privée (`ZELIJ_CORE_INTERDITS`) qui ne fait jamais partie du dépôt.
 
-## Feuille de route
+## Licence
 
-Lot 1 noyau (fait) · lot 2 les quatre agents (fait) · lot 3 compta et CRM light (fait) · lot 4 publication, aquarium, catalogue (fait) · lot 5 Software factory, cibles OVH / serveur SSH, porte de sécurité (fait) · lot 6 cible GCP, module payant signé (fait, hors dépôt public).
+GNU AGPL v3. Copyright (C) 2026 zelij.ai. Vous pouvez utiliser, modifier et redistribuer le noyau, à condition de publier vos modifications sous la même licence. L'édition complète qui fait tourner zelij.ai reste celle de l'éditeur.
 
 by zelij.ai — https://zelij.ai/

@@ -4,7 +4,7 @@
 
 Écrivez à **securite@zelij.ai** avec ce que vous avez vu, comment le reproduire et, si vous l'avez, un correctif. N'ouvrez pas d'issue publique avant que la correction soit publiée : une faille décrite en public avant son correctif met en danger toutes les installations.
 
-Vous recevrez un accusé de réception sous cinq jours ouvrés, puis un échange jusqu'à la correction. Les correctifs de sécurité sortent dans une version dédiée, signalée dans `CHANGELOG.md`, avec votre nom si vous le souhaitez.
+Nous répondons à chaque signalement, dans l'ordre d'arrivée, puis l'échange se poursuit jusqu'à la correction. Les correctifs de sécurité sortent dans une version dédiée, signalée dans `CHANGELOG.md`, avec votre nom si vous le souhaitez.
 
 Pas de programme de récompense : un merci public et une mention dans le journal des versions.
 
