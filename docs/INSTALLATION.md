@@ -4,6 +4,10 @@ Ce guide va de la machine vide au bureau en ligne, en https, avec vos agents, vo
 
 Zelij Core tient dans deux conteneurs : le bureau (FastAPI, qui héberge aussi les agents) et une base PostgreSQL. Rien d'autre ne tourne : pas de file d'attente, pas de cache, pas de service tiers. Les agents parlent à Claude avec **votre** clé et n'écrivent rien ailleurs que dans votre base.
 
+## 0. Essayer d'abord, sans rien configurer
+
+Le mode démonstration montre le bureau avec une entreprise fictive et des agents simulés : `docker compose -f docker-compose.demo.yml up --build`, puis `http://localhost:8000`. Il n'utilise ni clé, ni e-mail, ni base durable, et il refuse de démarrer sur une installation réelle (production, PostgreSQL, ou base qui porte déjà une organisation). Pour une vraie installation, suivez les chapitres ci-dessous : ils n'utilisent jamais ce fichier.
+
 ## 1. Ce qu'il vous faut
 
 | Besoin | Pourquoi | Où l'obtenir |
@@ -46,6 +50,28 @@ Ouvrez `.env` et renseignez, dans cet ordre :
 Le reste (`SITE_*`, `SSH_*`, `OVH_*`, `GITHUB_TOKEN`) concerne la Software factory et se remplit plus tard, au chapitre 8.
 
 Ne commitez jamais `.env` : il est dans `.gitignore`.
+
+### Utiliser un autre fournisseur de modèle (facultatif)
+
+Claude est le choix par défaut, et c'est avec lui que le bureau est mis au point et éprouvé. Vous pouvez brancher un autre fournisseur, pourvu qu'il parle l'interface d'OpenAI : OpenAI, un modèle local (Ollama, LM Studio), Mistral, OpenRouter. Dans `.env` :
+
+```
+MODELE_FOURNISSEUR=openai
+OPENAI_API_KEY=…                      # inutile pour un modèle local
+OPENAI_BASE_URL=…                     # vide pour OpenAI ; Ollama dans Docker : http://host.docker.internal:11434/v1
+MODELE_RAISONNEMENT=…                 # le nom du modèle pour chaque classe d'agent
+MODELE_EQUILIBRE=…
+MODELE_RAPIDE=…
+MODELE_TARIFS={"nom": [entrée, sortie, cache]}     # dollars par million de tokens ; un modèle local : [0, 0, 0]
+```
+
+Trois choses à savoir avant de changer :
+
+- **Vos données suivent le modèle.** Vos demandes et ce que lisent les agents partent chez le fournisseur choisi. Avec un modèle local, rien ne quitte la machine.
+- **Les garde-fous ne changent pas.** Outils limités à la fiche de l'agent, plus de sortie après une lecture privée, mise en ligne par sa seule décision, plafond mensuel : tout cela est dans le code du bureau, pas dans le modèle.
+- **La qualité, elle, change.** Les agents appellent des outils et rendent des réponses structurées. Un petit modèle local s'y trompe plus souvent : attendez-vous à des paquets de décision incomplets, que le bureau refuse d'ouvrir. Prenez un modèle qui sait appeler des outils.
+
+Sans tarif déclaré, le coût d'un modèle inconnu est compté au tarif le plus cher de la table et le compteur du bureau le signale.
 
 ## 4. Démarrer en local (http)
 

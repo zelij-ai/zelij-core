@@ -2,6 +2,19 @@
 
 Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il y a quelque chose à faire. Les correctifs de sécurité sont marqués **sécurité**.
 
+## 0.8.1 — 2026-10-11
+
+- **Autres fournisseurs de modèles.** Claude reste le choix par défaut. `MODELE_FOURNISSEUR=openai` branche toute interface compatible avec celle d'OpenAI : OpenAI, un modèle local (Ollama, LM Studio), Mistral, OpenRouter. On nomme les modèles par classe (`MODELE_RAISONNEMENT`, `MODELE_EQUILIBRE`, `MODELE_RAPIDE`) et on déclare leurs tarifs (`MODELE_TARIFS`) ; un modèle local se déclare à zéro.
+- Les garde-fous du bureau ne dépendent pas du modèle : outils de la fiche, plus de sortie après une lecture privée, mise en ligne par sa seule décision, plafond mensuel. La qualité du travail des agents, elle, en dépend : le bureau est mis au point et éprouvé avec Claude.
+- Un modèle sans tarif connu ni déclaré est compté au tarif le plus cher, et le bureau le signale : jamais de coût nul par oubli.
+- Rien à faire après mise à jour : sans `MODELE_FOURNISSEUR`, rien ne change.
+
+## 0.8.0 — 2026-10-11
+
+- **Mode démonstration.** `docker compose -f docker-compose.demo.yml up --build` ouvre un bureau déjà rempli : une entreprise fictive, une journée de travail des agents dans l'aquarium, des décisions à prendre, des finances et des contacts. Aucune clé, aucun e-mail, aucun coût : les agents sont simulés d'après un scénario, rien ne part vers un modèle. Un bandeau le dit sur chaque page.
+- Ce mode refuse de démarrer en production, sur PostgreSQL, ou sur une base qui porte une organisation réelle.
+- Rien à faire après mise à jour : sans `CORE_DEMO=1`, rien ne change.
+
 ## 0.7.6 — 2026-10-10
 
 - **sécurité** — Chaque décision préparée par un agent affiche sa provenance : pages lues, fichiers du dépôt lus, actions refusées par le bureau. Une décision dont la tâche est confiée à un autre agent après lecture de contenu externe, ou préparée avec un refus en route, est signalée « à relire avec attention » et demande une confirmation à l'approbation. L'essai du 10/10 a montré qu'une page de fournisseur pouvait faire ouvrir à un agent une décision dictée par elle : le fondateur le voit désormais avant d'approuver.

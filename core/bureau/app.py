@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from core import VERSION, agents, db, gouvernance, modules, passerelle
+from core import VERSION, agents, db, demo, gouvernance, modules, passerelle
 from core.bureau import connexion as cx
 from core.executeur import Executeur
 from core.schema import migrer
@@ -33,8 +33,8 @@ def _origine() -> str:
 async def _controle_csrf(request: Request) -> None:
     """Tout POST d'un utilisateur connecté porte le jeton de sa session (champ `_csrf` ou en-tête X-CSRF-Token) : un formulaire
     forgé depuis un autre site ne le connaît pas. Seconde barrière après le cookie SameSite=Strict et le contrôle d'origine."""
-    if request.method != "POST" or request.url.path == "/connexion" or request.url.path.startswith("/connexion/"):
-        return                      # demander un lien ou le confirmer se fait sans session : le lien lui-même est la preuve
+    if request.method != "POST" or request.url.path in ("/connexion", "/demo/entrer") or request.url.path.startswith("/connexion/"):
+        return                      # demander un lien, le confirmer ou entrer dans la démonstration se fait sans session
     cookie = request.cookies.get(cx.COOKIE)
     uid = cx.lire_session(cookie)
     if not uid:
@@ -187,6 +187,8 @@ def _garde(request: Request, c: db.Connexion, *, fondateur: bool = False) -> tup
 
 def _page(request: Request, nom: str, **ctx) -> HTMLResponse:
     ctx.update(request=request, message=MESSAGES.get(request.query_params.get("m", ""), ""))
+    if demo.actif():
+        ctx.update(demo=True, demo_bandeau=demo.BANDEAU, demo_suggestions=demo.SUGGESTIONS, demo_guide=demo.GUIDE_INSTALLATION)
     if ctx.get("u"):
         ctx["csrf"] = cx.jeton_csrf(ctx["u"]["id"], int(ctx["u"].get("session_n") or 0))
     return templates.TemplateResponse(request, nom, ctx)
@@ -213,6 +215,8 @@ def connexion(request: Request):
 
 @app.post("/connexion")
 def connexion_envoyer(request: Request, taches: BackgroundTasks, email: str = Form("")):
+    if demo.actif():
+        return _rediriger("/connexion")       # la démonstration n'envoie aucun e-mail : on y entre par son bouton
     e = cx.email_valide(email)
     if not e:
         return _rediriger("/connexion", "email")
@@ -248,6 +252,22 @@ def connexion_jeton(jeton: str):
             gouvernance.journaliser(c, u["org_id"], u["email"], "connexion")
     if not u:
         return _rediriger("/connexion", "lien_invalide")
+    r = _rediriger("/bureau")
+    r.set_cookie(cx.COOKIE, cx.signer_session(u["id"], n=int(u.get("session_n") or 0)), max_age=cx.DUREE_SESSION, httponly=True, samesite="strict",
+                 secure=_origine().startswith("https"), path="/")
+    return r
+
+
+@app.post("/demo/entrer")
+def demo_entrer():
+    """Entrée dans la démonstration, sans e-mail : la route n'existe que si CORE_DEMO=1, et ce mode refuse de démarrer sur
+    une installation réelle (voir core/demo.py)."""
+    if not demo.actif():
+        return Response("introuvable", status_code=404)
+    uid = demo.preparer()
+    with db.connexion() as c:
+        u = c.une("SELECT * FROM utilisateurs WHERE id = ?", (uid,))
+        gouvernance.journaliser(c, u["org_id"], u["email"], "connexion", "", "entrée dans la démonstration")
     r = _rediriger("/bureau")
     r.set_cookie(cx.COOKIE, cx.signer_session(u["id"], n=int(u.get("session_n") or 0)), max_age=cx.DUREE_SESSION, httponly=True, samesite="strict",
                  secure=_origine().startswith("https"), path="/")
@@ -291,7 +311,17 @@ def bureau(request: Request):
                      journal=c.lignes("SELECT * FROM journal WHERE org_id = ? ORDER BY cree_le DESC LIMIT 40", (u["org_id"],)),
                      executions=_executions(c, u["org_id"]), fiches=list(fiches.values()), chef=fiches.get(CHEF),
                      mois=mois, depense=depense, plafond=plafond, plafond_atteint=atteint, modules=modules.installes(c, u["org_id"]),
-                     tarifs_le=passerelle.TARIFS_RELEVES_LE)
+                     tarifs_le=passerelle.TARIFS_RELEVES_LE, modele=_modele_affiche(fiches))
+
+
+def _modele_affiche(fiches: dict) -> dict:
+    """Ce que le compteur du bureau dit du modèle : le fournisseur, et si un tarif manque (le coût est alors compté au plus cher)."""
+    try:
+        d = passerelle.description()
+    except RuntimeError as exc:
+        return {"fournisseur": "?", "libelle": str(exc)[:80], "local": False, "sans_tarif": [], "erreur": True}
+    d["sans_tarif"] = sorted({f.modele for f in fiches.values() if not passerelle.tarif_connu(f.modele)})
+    return d
 
 
 INSTRUCTION_DEMANDE = (
@@ -702,7 +732,8 @@ def vitrine(request: Request, jeton: str):
         if org is None:
             return Response("page introuvable", status_code=404)
         etat = aquarium.etat(c, org["id"], agents.charger(), public=True)
-    return templates.TemplateResponse(request, "vitrine.html", {"request": request, "organisation": org["nom"], "etat": etat, "jeton": jeton})
+    return templates.TemplateResponse(request, "vitrine.html", {"request": request, "organisation": org["nom"], "etat": etat, "jeton": jeton,
+                                                                "demo": demo.actif(), "demo_bandeau": demo.BANDEAU})
 
 
 @app.get("/api/vitrine/{jeton}")
@@ -892,3 +923,6 @@ def batir_deployer(request: Request):
 from core import sauvegarde as _sauvegarde  # noqa: E402
 
 _sauvegarde.demarrer_fil()
+
+if demo.actif():
+    demo.demarrer(app)      # refuse de démarrer en production, sur PostgreSQL, ou sur une base qui porte une organisation réelle

@@ -4,6 +4,10 @@ This guide takes you from a bare machine to an office running over https, with y
 
 Zelij Core is two containers: the office (FastAPI, which also hosts the agents) and a PostgreSQL database. Nothing else runs: no queue, no cache, no third-party service. The agents talk to Claude with **your** key and write nowhere but your database.
 
+## 0. Try it first, with nothing to configure
+
+Demonstration mode shows the office with a fictional company and simulated agents: `docker compose -f docker-compose.demo.yml up --build`, then `http://localhost:8000`. It uses no key, no e-mail and no durable database, and it refuses to start on a real installation (production, PostgreSQL, or a database that already holds an organisation). For a real installation, follow the chapters below: they never use that file.
+
 ## 1. What you need
 
 | Need | Why | Where to get it |
@@ -46,6 +50,28 @@ Open `.env` and fill in, in this order:
 The rest (`SITE_*`, `SSH_*`, `OVH_*`, `GITHUB_TOKEN`) belongs to the Software factory and is filled in later, in chapter 8.
 
 Never commit `.env`: it is in `.gitignore`.
+
+### Use another model provider (optional)
+
+Claude is the default, and the office is tuned and tested with it. You can plug in another provider as long as it speaks the OpenAI interface: OpenAI, a local model (Ollama, LM Studio), Mistral, OpenRouter. In `.env`:
+
+```
+MODELE_FOURNISSEUR=openai
+OPENAI_API_KEY=…                      # not needed for a local model
+OPENAI_BASE_URL=…                     # empty for OpenAI; Ollama under Docker: http://host.docker.internal:11434/v1
+MODELE_RAISONNEMENT=…                 # the model name for each agent class
+MODELE_EQUILIBRE=…
+MODELE_RAPIDE=…
+MODELE_TARIFS={"name": [input, output, cache]}     # dollars per million tokens; a local model: [0, 0, 0]
+```
+
+Three things to know before switching:
+
+- **Your data follows the model.** Your requests and whatever the agents read go to the chosen provider. With a local model, nothing leaves the machine.
+- **The guardrails do not change.** Tools limited to the agent's sheet, no outbound call after a private read, go-live only through its own decision, monthly cap: all of that lives in the office code, not in the model.
+- **Quality does change.** Agents call tools and return structured answers. A small local model gets these wrong more often: expect incomplete decision packets, which the office refuses to open. Pick a model that can call tools.
+
+Without a declared price, an unknown model is costed at the most expensive rate in the table and the office counter says so.
 
 ## 4. Start locally (http)
 

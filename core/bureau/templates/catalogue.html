@@ -6,6 +6,26 @@
 </div>
 <p class="note">L'édition gratuite reste utilisable pour toujours avec ses quatre agents. Les modules ci-dessous s'achètent chez l'éditeur, qui remet un module signé ; il s'installe ici, par son manifeste, après vérification de la signature. Aucun paiement ne passe par ce bureau.</p>
 
+{% if demo %}
+<section class="bloc apres-demo" id="apres" aria-labelledby="apres-titre">
+  <h2 id="apres-titre">Après la démonstration</h2>
+  <div class="apres-voies">
+    <article>
+      <p class="sur-titre">Gratuit, pour toujours</p>
+      <h3>Installer Zelij Core chez vous</h3>
+      <p>Le même bureau et ses quatre agents, sur votre machine, avec votre clé de modèle et vos données. Code ouvert, licence AGPL-3.0.</p>
+      <a class="bouton" href="{{ demo_guide }}" rel="noopener">Suivre le guide d'installation</a>
+    </article>
+    <article>
+      <p class="sur-titre">Quand vous voulez aller plus loin</p>
+      <h3>Ajouter des agents, ou ne rien installer</h3>
+      <p>Les modules ci-dessous ajoutent des agents et des cibles de déploiement à une vraie installation. Zelij Cloud est le même bureau, hébergé, sauvegardé et mis à jour par l'éditeur.</p>
+      <a class="bouton bouton--laiton" href="#pack-zelij-cloud">Voir Zelij Cloud et les modules</a>
+    </article>
+  </div>
+  <p class="note">Dans une vraie installation, c'est le Chef de cabinet qui vous propose un module quand une demande dépasse le bureau, en face du temps qu'il faudrait pour le construire. Vous décidez.</p>
+</section>
+{% endif %}
 <div class="packs">
 {% for p in packs %}
   <article class="bloc pack{% if p.id == cible %} pack--cible{% endif %}" id="pack-{{ p.id }}"{% if p.id == cible %} aria-current="true"{% endif %}>

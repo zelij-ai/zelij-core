@@ -1,0 +1,23 @@
+# Essayer Zelij Core en une minute, sans clé ni configuration :
+#   docker compose -f docker-compose.demo.yml up --build
+# puis ouvrir http://localhost:8000. Entreprise fictive, agents simulés, base temporaire en mémoire : rien n'est envoyé à un
+# modèle, rien ne coûte, et tout disparaît à l'arrêt. Ce fichier ne sert jamais à une installation réelle : le mode
+# démonstration refuse de démarrer en production, sur PostgreSQL, ou sur une base qui porte une vraie organisation.
+name: zelij-core-demo
+services:
+  core-demo:
+    build: .
+    environment:
+      CORE_DEMO: "1"
+      CORE_ENV: demo
+      DATABASE_URL: sqlite:////tmp/demo.sqlite
+      APP_ORIGIN: http://localhost:8000
+      SAUVEGARDES_DIR: /tmp/sauvegardes
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+      - /home/core:size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    ports:
+      - "127.0.0.1:8000:8000"

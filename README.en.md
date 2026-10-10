@@ -22,6 +22,15 @@
 - **Software factory**: the Builder reads and proposes on a single repository, through pull requests that pass the security gate (300 lines, text only, no secrets, no infrastructure files, no dependency with a known vulnerability via OSV); deployment to a Linux server over SSH or to OVH (domain and DNS through the API) with an atomic switch, a smoke test and rollback; domain probe; daily backup of the office. It never merges, never pays, never touches the office.
 - **The agents**: one folder per agent, an `agent.md` with a simple header and instructions in French. Four agents: Camille Aubert (chief of staff), Élise Tanguy (marketing and products), Nour Bellamy (finance and clients), Sacha Ferrand (software factory). The founder talks to each of them from the office; an approved packet that names an agent and a task runs right away, within the approved plan.
 
+## Try it in one minute, no key
+
+```bash
+git clone https://github.com/zelij-ai/zelij-core.git && cd zelij-core
+docker compose -f docker-compose.demo.yml up --build
+```
+
+Open `http://localhost:8000` and enter the demonstration: a fictional company, four simulated agents, decisions to approve, the aquarium replaying their day. No key, no account, no cost; nothing is sent to a model and everything disappears when you stop it. Once convinced, move on to the real installation below. The office itself is in French.
+
 ## Run
 
 ```bash

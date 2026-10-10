@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/static/app.css?v={{ VERSION }}">
 </head>
 <body>
+{% if demo %}<p class="bandeau-demo" role="status"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span><strong>Démonstration.</strong> {{ demo_bandeau }}</span></p>{% endif %}
 <header class="entete">
   <span class="marque"><span class="marque-carreau" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 6.4L21 12l-6.4 3.6L12 22l-2.6-6.4L3 12l6.4-3.6z" fill="#fff" opacity=".95"/><circle cx="12" cy="12" r="2.2" fill="#1c1917"/></svg></span>{{ organisation }}</span>
   <div class="compte"><a class="lien" href="https://zelij.ai/" rel="noopener">by zelij.ai</a></div>
@@ -19,7 +20,7 @@
   <p class="intro">Chez {{ organisation }}, des agents d'IA préparent le travail : contenu, finances, suivi des clients, site. Rien ne se fait sans une décision humaine. Chaque bulle ci-dessous est une action réelle des dernières 24 heures.</p>
   <section class="scene" aria-label="Scène des agents">
     <div class="scene-horloge" aria-live="off"><strong id="aq-horloge">--:--:--</strong><span id="aq-sous">DIRECT</span></div>
-    <canvas id="aquarium" data-source="/api/vitrine/{{ jeton }}" role="img" aria-label="Aquarium des agents de {{ organisation }}"></canvas>
+    <canvas id="aquarium" data-source="/api/vitrine/{{ jeton }}" {% if demo %}data-mention="journée simulée · démonstration" {% endif %}role="img" aria-label="Aquarium des agents de {{ organisation }}"></canvas>
     <div class="scene-commandes">
       <button id="aq-pause" class="bouton bouton--laiton bouton--petit" type="button" aria-pressed="false">▶ Rejouer les 24 h</button>
       <button id="aq-direct" class="bouton bouton--second bouton--petit scene-direct" type="button">● Direct</button>

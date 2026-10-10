@@ -3,7 +3,13 @@
 {% block contenu %}
 <section class="connexion">
   <p class="sur-titre">Votre bureau</p>
-  {% if jeton %}
+  {% if demo %}
+  <h1>Essayer Zelij Core</h1>
+  <p class="intro">Un bureau déjà rempli : une entreprise fictive, quatre agents simulés, des décisions à prendre. Aucune clé, aucun compte, aucun coût. Rien de ce que vous y ferez n'est réel.</p>
+  <form method="post" action="/demo/entrer" class="formulaire">
+    <button class="bouton" type="submit" autofocus>Entrer dans la démonstration</button>
+  </form>
+  {% elif jeton %}
   <h1>Confirmer l'entrée</h1>
   <p class="intro">Vous avez ouvert votre lien de connexion. Un dernier geste : confirmez que c'est bien vous. Le lien ne sert qu'une fois. Ce n'est pas vous ? Fermez cette page : rien ne se passe sans ce clic.</p>
   <form method="post" action="/connexion/{{ jeton }}" class="formulaire">

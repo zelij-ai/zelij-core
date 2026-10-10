@@ -54,6 +54,9 @@ code { font-family: var(--mono); font-size: .9em; background: var(--papier-2); p
 .marque:hover .marque-carreau { transform: rotate(45deg); }
 .marque-carreau svg { width: 18px; height: 18px; }
 .nav { display: flex; gap: 4px; margin-left: 8px; }
+/* Écrans moyens : l'en-tête passe à la ligne plutôt que de déborder (défilement horizontal constaté à 820 et 1100 px). */
+.marque, .entete .lien { white-space: nowrap; }
+@media (max-width: 1180px) { .entete { flex-wrap: wrap; row-gap: 6px; } .nav { flex-wrap: wrap; } .compte-org { display: none; } }
 @media (max-width: 720px) { .entete { flex-wrap: wrap; gap: 8px 12px; padding: 10px 14px; } .marque { white-space: nowrap; font-size: 19px; }
   .nav { order: 3; flex-basis: 100%; margin: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; } .nav a { flex: 0 0 auto; }
   .compte { margin-left: auto; } .compte-org { max-width: 140px; } }
@@ -152,6 +155,19 @@ code { font-family: var(--mono); font-size: .9em; background: var(--papier-2); p
 .changes[open] summary { background: var(--laiton-soft); border-color: var(--laiton); }
 .changes .formulaire { margin-top: 10px; padding: 12px; border: 1px dashed var(--line-forte); border-radius: var(--rayon-s); animation: entree .35s var(--elan) both; }
 .encart--alerte { background: var(--alerte-soft); border-left: 4px solid var(--alerte); border-radius: 8px; padding: 10px 12px; }
+
+/* ---------- mode démonstration : un bandeau sur chaque page, lisible au texte et à l'icône, impossible à manquer */
+.bandeau-demo { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0; padding: 9px 16px; background: var(--ambre-soft); color: var(--encre);
+  border-bottom: 1px solid var(--ambre); font-size: 14px; line-height: 1.45; text-align: left; }
+.bandeau-demo svg { flex: none; color: var(--ambre); }
+.demo-essais { margin-top: 10px; }
+.bandeau-demo a { color: inherit; font-weight: 600; text-underline-offset: 3px; white-space: nowrap; }
+.apres-demo { border-color: color-mix(in srgb, var(--laiton) 40%, var(--line)); }
+.apres-voies { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 12px 0 14px; }
+.apres-voies article { border: 1px solid var(--line); border-radius: var(--rayon-s); padding: 16px 18px; background: var(--papier); display: grid; gap: 8px; align-content: start; }
+.apres-voies h3 { font-size: 20px; margin: 0; }
+.apres-voies p { margin: 0; color: var(--encre-2); }
+.apres-voies .bouton { justify-self: start; margin-top: 6px; text-decoration: none; }
 
 /* ---------- provenance d'une décision : ce que l'agent a lu au dehors. Le niveau se lit au titre et à l'icône, pas à la seule couleur. */
 .decision .tache { font-size: 14.5px; color: var(--encre); background: var(--papier-2); border-radius: var(--rayon-s); padding: 10px 12px; margin: 10px 0 0; overflow-wrap: anywhere; }

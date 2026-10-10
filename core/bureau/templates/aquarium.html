@@ -12,11 +12,11 @@
     {% endif %}
   </div>
 </div>
-<p class="note">Chaque carte est une action réelle des dernières 24 heures : une demande, un outil appelé, une décision proposée ou prise. Les anneaux en pointillé sont des postes libres : cliquez-en un pour voir ce que ferait cet agent chez vous. Survolez un agent pour son détail.</p>
+<p class="note">{% if demo %}Dans cette démonstration, la journée est simulée. Dans une vraie installation, chaque carte est une action réelle des dernières 24 heures :{% else %}Chaque carte est une action réelle des dernières 24 heures :{% endif %} une demande, un outil appelé, une décision proposée ou prise. Les anneaux en pointillé sont des postes libres : cliquez-en un pour voir ce que ferait cet agent chez vous. Survolez un agent pour son détail.</p>
 
 <section class="scene" aria-label="Scène des agents">
   <div class="scene-horloge" aria-live="off"><strong id="aq-horloge">--:--:--</strong><span id="aq-sous">DIRECT</span></div>
-  <canvas id="aquarium" data-source="/api/aquarium" role="img" aria-label="Aquarium des agents : {{ etat.agents|length }} agents, {{ etat.executions }} actions sur 24 heures, {{ etat.decisions_en_attente }} décision(s) en attente"></canvas>
+  <canvas id="aquarium" data-source="/api/aquarium" {% if demo %}data-mention="journée simulée · démonstration" {% endif %}role="img" aria-label="Aquarium des agents : {{ etat.agents|length }} agents, {{ etat.executions }} actions sur 24 heures, {{ etat.decisions_en_attente }} décision(s) en attente"></canvas>
   <div class="scene-commandes">
     <button id="aq-pause" class="bouton bouton--laiton bouton--petit" type="button" aria-pressed="false">▶ Rejouer les 24 h</button>
     <button id="aq-direct" class="bouton bouton--second bouton--petit scene-direct" type="button">● Direct</button>

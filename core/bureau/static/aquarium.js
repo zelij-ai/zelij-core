@@ -187,7 +187,7 @@
     var vivantes = []; cartes.forEach(function (c, i) { if (carte(c, t, i)) vivantes.push(c); }); cartes = vivantes;
     ctx.save(); ctx.font = '11px ui-sans-serif, system-ui'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
     [['#8ea6f0', 'échange'], ['#37b385', 'exécution'], ['#e0a21c', 'décision · fondateur']].forEach(function (lg, i) { var x = 16 + i * 120; ctx.strokeStyle = lg[0]; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, h - 16); ctx.lineTo(x + 22, h - 16); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText(lg[1], x + 28, h - 12); });
-    ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillText('chaque carte est une action réelle · by zelij.ai', w - 14, h - 12); ctx.restore();
+    ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillText((canvas.getAttribute('data-mention') || 'chaque carte est une action réelle') + ' · by zelij.ai', w - 14, h - 12); ctx.restore();
     horloge();
   }
   function boucle(t) { if (dernierTick !== null) avancer(t - dernierTick); dernierTick = t; dessiner(t); if (!reduit) requestAnimationFrame(boucle); }

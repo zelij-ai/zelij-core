@@ -26,9 +26,11 @@ class Fiche:
 
     @property
     def modele(self) -> str:
-        """Le modèle vient de la classe, sauf si le fondateur le fixe par variable d'environnement (MODELE_<ID>)."""
-        force = os.environ.get("MODELE_" + re.sub(r"[^A-Z0-9]+", "_", self.id.upper()).strip("_"), "")
-        return force or CLASSES_MODELE.get(self.classe_modele, CLASSES_MODELE["raisonnement"])
+        """Le modèle vient de la classe de l'agent. Le fondateur peut le fixer par agent (MODELE_<ID>) ou par classe
+        (MODELE_RAISONNEMENT, MODELE_EQUILIBRE, MODELE_RAPIDE) : c'est ainsi qu'on nomme les modèles d'un autre fournisseur."""
+        force = os.environ.get("MODELE_" + re.sub(r"[^A-Z0-9]+", "_", self.id.upper()).strip("_"), "").strip()
+        classe = self.classe_modele if self.classe_modele in CLASSES_MODELE else "raisonnement"
+        return force or os.environ.get("MODELE_" + classe.upper(), "").strip() or CLASSES_MODELE[classe]
 
     @property
     def signature(self) -> str:

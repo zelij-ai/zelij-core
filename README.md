@@ -22,6 +22,15 @@
 - **Software factory** : le Bâtisseur lit et propose sur un seul dépôt, par demandes de fusion passées par la porte de sécurité (300 lignes, texte seulement, aucun secret, aucun fichier d'infrastructure, dépendances sans vulnérabilité connue via OSV) ; mise en ligne sur un serveur Linux en SSH ou chez OVH (domaine et DNS par l'API) avec bascule atomique, test de fumée et retour arrière ; sonde du domaine ; sauvegarde quotidienne du bureau. Il ne fusionne jamais, ne paie jamais, ne touche jamais au bureau.
 - **Les agents** : un dossier par agent, un `agent.md` avec un en-tête simple et des consignes en français. Quatre agents : Camille Aubert (chef-de-cabinet), Élise Tanguy (croissance, marketing et produits), Nour Bellamy (finances-clients), Sacha Ferrand (batisseur, software factory). Le fondateur s'adresse à chacun depuis le bureau ; un paquet approuvé qui désigne un agent et une tâche s'exécute aussitôt, dans les limites du plan.
 
+## Essayer en une minute, sans clé
+
+```bash
+git clone https://github.com/zelij-ai/zelij-core.git && cd zelij-core
+docker compose -f docker-compose.demo.yml up --build
+```
+
+Ouvrez `http://localhost:8000` et entrez dans la démonstration : une entreprise fictive, quatre agents simulés, des décisions à approuver, l'aquarium qui rejoue leur journée. Aucune clé, aucun compte, aucun coût ; rien n'est envoyé à un modèle et tout disparaît à l'arrêt. Quand vous êtes convaincu, passez à l'installation réelle ci-dessous.
+
 ## Démarrer
 
 ```bash

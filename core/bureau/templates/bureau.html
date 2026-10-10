@@ -6,7 +6,7 @@
   <div class="compteur {% if plafond_atteint %}compteur--alerte{% endif %}" aria-label="Coût du mois">
     <strong><span data-compte="{{ '%.2f'|format(depense) }}" data-dec="2">{{ '%.2f'|format(depense) }}</span> €</strong>
     <div class="compteur-barre" role="img" aria-label="{{ '%.0f'|format(100 * depense / plafond if plafond else 0) }} % du plafond"><i data-part="{{ '%.0f'|format((100 * depense / plafond) if plafond else 0) }}"></i></div>
-    <span>sur {{ '%.0f'|format(plafond) }} € ce mois · tarifs relevés le {{ tarifs_le }}</span>
+    <span>sur {{ '%.0f'|format(plafond) }} € ce mois · {% if modele.fournisseur == 'anthropic' %}tarifs relevés le {{ tarifs_le }}{% else %}modèle : {{ modele.libelle }}{% if modele.sans_tarif %} · tarif non déclaré, compté au plus cher{% endif %}{% endif %}</span>
   </div>
 </div>
 
@@ -19,6 +19,7 @@
     <label>À <select name="agent">{% for f in fiches %}<option value="{{ f.id }}" {% if chef and f.id == chef.id %}selected{% endif %}>{{ f.nom }} · {{ f.fonction }}</option>{% endfor %}</select></label>
     <button class="bouton" type="submit" {% if plafond_atteint %}disabled{% endif %}>Envoyer</button>
   </form>
+  {% if demo %}<p class="note demo-essais"><strong>À essayer dans la démonstration :</strong> {% for s in demo_suggestions %}« {{ s }} »{% if not loop.last %} · {% endif %}{% endfor %}. Puis approuvez une décision ci-dessous, regardez <a href="/aquarium">l'aquarium</a>, et voyez <a href="/catalogue#apres">ce qui vient après la démonstration</a>.</p>{% endif %}
   {% else %}<p class="encart encart--alerte">La fiche du Chef de cabinet est absente du dossier agents/.</p>{% endif %}
 </section>
 

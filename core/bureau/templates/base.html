@@ -10,6 +10,7 @@
 </head>
 <body>
 <a class="evitement" href="#contenu">Aller au contenu</a>
+{% if demo %}<p class="bandeau-demo" role="status"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span><strong>Démonstration.</strong> {{ demo_bandeau }}{% if u %} <a href="/catalogue#apres">Et après ?</a>{% endif %}</span></p>{% endif %}
 <header class="entete">
   <a class="marque" href="/bureau" aria-label="Zelij Core, bureau">
     <span class="marque-carreau" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 6.4L21 12l-6.4 3.6L12 22l-2.6-6.4L3 12l6.4-3.6z" fill="#fff" opacity=".95"/><circle cx="12" cy="12" r="2.2" fill="#1c1917"/></svg></span>
