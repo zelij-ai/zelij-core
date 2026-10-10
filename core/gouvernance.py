@@ -32,6 +32,7 @@ class Paquet:
     execution_id: str | None = None
     agent_cible: str = ""       # l'agent qui exécutera le plan si le fondateur approuve (vide : rien ne s'exécute)
     tache: str = ""             # la consigne d'exécution transmise à cet agent
+    provenance: dict = field(default_factory=dict)      # relevé de l'exécuteur : pages et fichiers lus, refus (voir core/provenance.py)
 
     def valider(self) -> list[str]:
         """Un paquet incomplet ne s'ouvre pas : le fondateur doit pouvoir décider sans poser de question."""
@@ -65,7 +66,7 @@ def engage(paquet: Paquet, *, exposition_publique: bool = False, suppression: bo
     return motifs
 
 
-def depuis_sortie_agent(demandeur: str, sortie: dict, *, execution_id: str | None = None, portee: str = "") -> Paquet:
+def depuis_sortie_agent(demandeur: str, sortie: dict, *, execution_id: str | None = None, portee: str = "", provenance: dict | None = None) -> Paquet:
     """Construit un paquet à partir du JSON rendu par un agent ; les champs absents restent vides et `valider()` les signale."""
     def liste(v) -> list[str]:
         return [str(x) for x in v] if isinstance(v, list) else ([str(v)] if v else [])
@@ -81,6 +82,7 @@ def depuis_sortie_agent(demandeur: str, sortie: dict, *, execution_id: str | Non
         reversibilite=str(sortie.get("reversibilite") or "reversible"), plan=liste(sortie.get("plan")),
         retour_arriere=liste(sortie.get("retour_arriere")), impact_eur=impact, portee=portee, execution_id=execution_id,
         agent_cible=str(sortie.get("agent_cible") or "")[:60], tache=str(sortie.get("tache") or "")[:4000],
+        provenance=provenance or {},       # jamais lue dans la sortie de l'agent : c'est l'exécuteur qui la relève
     )
 
 
@@ -96,12 +98,12 @@ def ouvrir(c: db.Connexion, org_id: str, paquet: Paquet) -> str:
     did = db.nouvel_id()
     d = asdict(paquet)
     c.executer("INSERT INTO decisions (id, org_id, demandeur, objectif, proposition, pourquoi_maintenant, options, recommandation, risques, "
-               "reversibilite, plan, retour_arriere, impact_eur, etat, portee, execution_id, agent_cible, tache, cree_le) "
-               "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+               "reversibilite, plan, retour_arriere, impact_eur, etat, portee, execution_id, agent_cible, tache, provenance, cree_le) "
+               "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                (did, org_id, d["demandeur"], d["objectif"], d["proposition"], d["pourquoi_maintenant"], json.dumps(d["options"], ensure_ascii=False),
                 d["recommandation"], json.dumps(d["risques"], ensure_ascii=False), d["reversibilite"], json.dumps(d["plan"], ensure_ascii=False),
                 json.dumps(d["retour_arriere"], ensure_ascii=False), d["impact_eur"], "en_attente", d["portee"], d["execution_id"],
-                d["agent_cible"], d["tache"], db.maintenant()))
+                d["agent_cible"], d["tache"], json.dumps(d["provenance"], ensure_ascii=False)[:6000] if d["provenance"] else "", db.maintenant()))
     journaliser(c, org_id, paquet.demandeur, "decision.ouverte", did, paquet.objectif)
     return did
 
@@ -113,6 +115,13 @@ def _hydrater(row: dict) -> dict:
         except ValueError:
             row[k] = []
     row["etat_libelle"] = ETATS.get(row["etat"], row["etat"])
+    try:
+        brut = json.loads(row.get("provenance") or "null")
+    except ValueError:
+        brut = None
+    from core import provenance as _provenance
+
+    row["provenance"] = _provenance.evaluer(brut, demandeur=row.get("demandeur") or "", agent_cible=row.get("agent_cible") or "", tache=row.get("tache") or "")
     return row
 
 

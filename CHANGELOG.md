@@ -2,6 +2,12 @@
 
 Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il y a quelque chose à faire. Les correctifs de sécurité sont marqués **sécurité**.
 
+## 0.7.6 — 2026-10-10
+
+- **sécurité** — Chaque décision préparée par un agent affiche sa provenance : pages lues, fichiers du dépôt lus, actions refusées par le bureau. Une décision dont la tâche est confiée à un autre agent après lecture de contenu externe, ou préparée avec un refus en route, est signalée « à relire avec attention » et demande une confirmation à l'approbation. L'essai du 10/10 a montré qu'une page de fournisseur pouvait faire ouvrir à un agent une décision dictée par elle : le fondateur le voit désormais avant d'approuver.
+- La trace des outils d'une exécution reste lisible même après un très gros appel.
+- Rien à faire après mise à jour. Les décisions déjà ouvertes n'ont pas de provenance ; les nouvelles l'affichent.
+
 ## 0.7.5 — 2026-10-10
 
 Version de **sécurité** : ce que le bureau refuse à un agent trompé par une page ou un fichier piégé, et contrôle des accès.

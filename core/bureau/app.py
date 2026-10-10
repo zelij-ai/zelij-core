@@ -365,12 +365,13 @@ def demande(request: Request, texte: str = Form(""), agent: str = Form("")):
                                         risques=["Exposition publique : relire les faits et les sources avant de fusionner"], reversibilite="reversible",
                                         plan=["Proposition sur le site (demande de fusion ou brouillon)", "Relecture et fusion par le fondateur"],
                                         retour_arriere=["Fermer la demande ou supprimer le brouillon"], portee="publication", execution_id=res["execution_id"],
-                                        agent_cible=fiche.id, tache=f"publier:{pid}")
+                                        agent_cible=fiche.id, tache=f"publier:{pid}", provenance=res.get("provenance") or {})
             did = gouvernance.ouvrir(c, u["org_id"], paquet)
             c.executer("UPDATE publications SET decision_id = ? WHERE id = ?", (did, pid))
             return _rediriger("/bureau", "demande")
         if res["statut"] == "terminee" and sortie.get("decision_requise"):
-            paquet = gouvernance.depuis_sortie_agent(fiche.signature, sortie, execution_id=res["execution_id"], portee="demande-fondateur")
+            paquet = gouvernance.depuis_sortie_agent(fiche.signature, sortie, execution_id=res["execution_id"], portee="demande-fondateur",
+                                                     provenance=res.get("provenance") or {})
             if paquet.agent_cible not in fiches:
                 paquet.agent_cible = fiche.id if paquet.tache else ""     # un agent inconnu ne peut pas être désigné
             if paquet.tache.strip().lower().startswith("publier:"):

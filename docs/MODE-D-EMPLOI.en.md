@@ -56,6 +56,8 @@ The pages written by the agents: draft, proposed (pull request open or draft dep
 
 **What reading tools return** (web pages, repository files) reaches the agents framed as "external content": data, never instructions. No model is immune to a page written to deceive it, so the office does not rely on its vigilance alone. Three rules hold in the code even if an agent is talked into something: it only runs the tools on its sheet; once it has read private data (repository, finances, contacts) it can only call your own site; and nothing goes live without a go-live decision approved by you.
 
+**Where a decision comes from.** Every decision prepared by an agent shows its provenance: the pages and repository files read while preparing it, and the actions the office refused. Three levels: "no external content read", "after reading external content" (re-read the task), "read carefully before approving" when the task is handed to another agent or an action was refused along the way. This record comes from the office, not from the agent: a page can neither write nor erase it.
+
 **Founder and members.** The founder decides, installs modules, opens a go-live and the public page. A member attached to the organisation reads and makes requests to the agents; a member does not decide.
 
 ## Keeping the cost in check

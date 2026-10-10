@@ -153,6 +153,24 @@ code { font-family: var(--mono); font-size: .9em; background: var(--papier-2); p
 .changes .formulaire { margin-top: 10px; padding: 12px; border: 1px dashed var(--line-forte); border-radius: var(--rayon-s); animation: entree .35s var(--elan) both; }
 .encart--alerte { background: var(--alerte-soft); border-left: 4px solid var(--alerte); border-radius: 8px; padding: 10px 12px; }
 
+/* ---------- provenance d'une décision : ce que l'agent a lu au dehors. Le niveau se lit au titre et à l'icône, pas à la seule couleur. */
+.decision .tache { font-size: 14.5px; color: var(--encre); background: var(--papier-2); border-radius: var(--rayon-s); padding: 10px 12px; margin: 10px 0 0; overflow-wrap: anywhere; }
+.provenance { margin: 10px 0 4px; padding: 11px 13px; border-radius: var(--rayon-s); border: 1px solid var(--line); border-left-width: 4px; font-size: 13.5px; line-height: 1.5; color: var(--encre-2); }
+.provenance p, .provenance ul { margin: 0; }
+.provenance-titre { display: flex; align-items: center; gap: 8px; color: var(--encre); }
+.provenance-titre svg { flex: none; }
+.provenance-raisons { padding-left: 26px; margin-top: 4px !important; font-weight: 600; }
+.provenance-liste { list-style: none; padding: 0; margin-top: 8px !important; display: grid; gap: 5px; }
+.provenance-liste .adresse { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.provenance-conseil { margin-top: 8px !important; color: var(--muted); }
+.provenance--interne { border-left-color: var(--ok); background: var(--ok-soft); }
+.provenance--interne .provenance-titre svg { color: var(--ok); }
+.provenance--externe { border-left-color: var(--ambre); background: var(--ambre-soft); }
+.provenance--externe .provenance-titre svg { color: var(--ambre); }
+.provenance--alerte { border-left-color: var(--alerte); background: var(--alerte-soft); }
+.provenance--alerte .provenance-titre svg, .provenance--alerte .provenance-raisons { color: var(--alerte); }
+.puce--refus { background: var(--alerte-soft); color: var(--alerte); border: 1px solid currentColor; }
+
 /* ---------- listes, tableaux, statuts */
 .liste { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 10px; }
 .liste li { border-bottom: 1px solid var(--line); padding-bottom: 9px; }

@@ -40,9 +40,27 @@
     <p class="small"><strong>Réversibilité :</strong> {{ d.reversibilite }}{% if d.impact_eur %} · <strong>impact :</strong> {{ '%.2f'|format(d.impact_eur) }} €{% endif %}</p>
     {% if d.plan %}<p class="small"><strong>Plan :</strong> {{ d.plan|join(' → ') }}</p>{% endif %}
     {% if d.retour_arriere %}<p class="small"><strong>Retour arrière :</strong> {{ d.retour_arriere|join(' → ') }}</p>{% endif %}
-    {% if d.agent_cible and d.tache %}<p class="small"><strong>Si vous approuvez :</strong> {{ d.agent_cible }} exécute « {{ d.tache }} » dans les limites du plan, et rend compte ici.</p>{% endif %}
+    {% if d.agent_cible and d.tache %}<p class="tache"><strong>Si vous approuvez :</strong> {{ d.agent_cible }} exécute « {{ d.tache }} » dans les limites du plan, et rend compte ici.</p>{% endif %}
+    {% set pv = d.provenance %}{% if pv.connue %}
+    <aside class="provenance provenance--{{ pv.niveau }}" role="note" aria-label="Provenance de cette décision">
+      <p class="provenance-titre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if pv.niveau == 'interne' %}<path d="M20 6L9 17l-5-5"/>{% elif pv.niveau == 'externe' %}<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/>{% else %}<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>{% endif %}</svg>
+        <strong>{{ pv.libelle }}</strong>
+      </p>
+      {% if pv.raisons %}<ul class="provenance-raisons">{% for r in pv.raisons %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}
+      {% if pv.pages or pv.depot or pv.refus %}
+      <ul class="provenance-liste">
+        {% for a in pv.pages %}<li><span class="puce">page lue</span> <span class="adresse">{{ a }}</span></li>{% endfor %}
+        {% for a in pv.depot %}<li><span class="puce">fichier du dépôt</span> <span class="adresse">{{ a }}</span></li>{% endfor %}
+        {% for a in pv.refus %}<li><span class="puce puce--refus">refusé par le bureau</span> <span class="adresse">{{ a }}</span></li>{% endfor %}
+        {% if pv.autres %}<li>et {{ pv.autres }} autre(s) lecture(s)</li>{% endif %}
+      </ul>
+      <p class="provenance-conseil">Une page ou un fichier peut contenir des consignes cachées, écrites pour un agent. Vérifiez que la tâche ci-dessus est bien celle que vous avez demandée.</p>
+      {% endif %}
+    </aside>
+    {% endif %}
     <div class="actions">
-      <form method="post" action="/decisions/{{ d.id }}/approuver"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--laiton" type="submit">Approuver</button></form>
+      <form method="post" action="/decisions/{{ d.id }}/approuver"{% if pv.niveau == 'alerte' %} data-confirmer="Cette décision vient d'une exécution qui a lu du contenu externe. Avez-vous relu la tâche et confirmez-vous l'approbation ?"{% endif %}><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--laiton" type="submit">Approuver</button></form>
       <form method="post" action="/decisions/{{ d.id }}/refuser" data-confirmer="Refuser cette décision ? L'agent en sera informé."><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--second" type="submit">Refuser</button></form>
       <details class="changes">
         <summary class="bouton bouton--second">Demander des changements</summary>

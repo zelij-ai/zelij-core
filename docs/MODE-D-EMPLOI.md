@@ -56,6 +56,8 @@ Les pages rédigées par les agents : brouillon, proposée (demande de fusion ou
 
 **Ce que renvoient les outils de lecture** (pages web, fichiers du dépôt) arrive aux agents encadré comme « contenu externe » : des données, jamais des consignes. Aucun modèle n'est à l'abri d'une page écrite pour le tromper ; le bureau ne compte donc pas sur sa seule vigilance. Trois règles tiennent dans le code, même si un agent se laisse convaincre : il n'exécute que les outils de sa fiche ; dès qu'il a lu une donnée privée (dépôt, finances, contacts), il ne peut plus appeler que votre site ; et rien ne part en ligne sans une décision de mise en ligne approuvée par vous.
 
+**D'où vient une décision.** Chaque décision préparée par un agent affiche sa provenance : les pages et les fichiers du dépôt lus pendant sa préparation, et les actions que le bureau a refusées. Trois niveaux : « sans lecture de contenu externe », « après lecture de contenu externe » (relisez la tâche), « à relire avec attention » quand la tâche est confiée à un autre agent ou qu'une action a été refusée en route. Ce relevé vient du bureau, pas de l'agent : une page ne peut ni l'écrire ni l'effacer.
+
 **Fondateur et membres.** Le fondateur décide, installe les modules, ouvre une mise en ligne et la page publique. Un membre rattaché à l'organisation lit et fait des demandes aux agents ; il ne décide pas.
 
 ## Tenir le coût

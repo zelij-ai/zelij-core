@@ -305,7 +305,7 @@ class Executeur:
                 if b.name not in fiche.outils:
                     # La fiche est la limite : un outil qui n'y figure pas n'est jamais exécuté, quoi que le modèle demande.
                     sortie = f"refus : l'outil {str(b.name)[:40]} n'est pas attribué à {fiche.id}"
-                    appels.append({"outil": str(b.name)[:40], "entree": entree, "resultat": sortie})
+                    appels.append({"outil": str(b.name)[:40], "entree": entree, "resultat": sortie[:300]})
                     resultats.append({"type": "tool_result", "tool_use_id": b.id, "content": sortie})
                     continue
                 sortie = executer_outil(b.name, entree, {"c": c, "org_id": org_id, "acteur": fiche.signature, "prive_lu": prive_lu,
@@ -323,9 +323,14 @@ class Executeur:
         return self._clore(c, eid, statut, sortie, appels, reponse, tours, tokens=(tokens_in, tokens_out), cout=cout, detail=detail)
 
     def _clore(self, c, eid, statut, sortie, appels, reponse, tours, *, tokens=(0, 0), cout=0.0, detail="") -> dict:
+        from core import provenance
+
+        # Trace gardée en base : chaque entrée abrégée, pour que la liste reste un JSON lisible même après un très gros appel
+        # (une proposition de fichiers, par exemple) ; la provenance, elle, est relevée sur les appels complets.
+        trace = [{"outil": a["outil"], "entree": {str(k)[:40]: str(v)[:300] for k, v in (a["entree"] or {}).items()}, "resultat": a["resultat"]} for a in appels[:60]]
         c.executer("UPDATE executions SET statut=?, sortie=?, outils=?, tokens_entree=?, tokens_sortie=?, cout_usd=?, tours=?, detail=?, fini_le=? WHERE id=?",
-                   (statut, json.dumps(sortie, ensure_ascii=False, default=str)[:20000], json.dumps(appels, ensure_ascii=False, default=str)[:20000],
+                   (statut, json.dumps(sortie, ensure_ascii=False, default=str)[:20000], json.dumps(trace, ensure_ascii=False, default=str),
                     tokens[0], tokens[1], round(cout, 6), tours, detail[:600], db.maintenant(), eid))
         c.commit()
-        return {"execution_id": eid, "statut": statut, "sortie": sortie, "outils": appels, "tours": tours,
+        return {"execution_id": eid, "statut": statut, "sortie": sortie, "outils": appels, "tours": tours, "provenance": provenance.depuis_appels(appels),
                 "tokens": {"entree": tokens[0], "sortie": tokens[1]}, "cout_usd": round(cout, 6), "detail": detail}
