@@ -164,7 +164,7 @@ def _connecter(email):
     client = TestClient(bureau.app, follow_redirects=False)
     client.post("/connexion", data={"email": email})
     lien = re.search(r"http://testserver/connexion/(\S+)", ENVOIS[-1][2]).group(1)
-    client.get(f"/connexion/{lien}")
+    client.post(f"/connexion/{lien}")
     client.headers["origin"] = "http://testserver"
     client.headers["x-csrf-token"] = cx.jeton_csrf(cx.lire_session(client.cookies[cx.COOKIE]))   # jeton anti-CSRF de la session
     return client

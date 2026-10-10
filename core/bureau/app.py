@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from fastapi import Depends, FastAPI, Form, HTTPException, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -33,8 +33,8 @@ def _origine() -> str:
 async def _controle_csrf(request: Request) -> None:
     """Tout POST d'un utilisateur connecté porte le jeton de sa session (champ `_csrf` ou en-tête X-CSRF-Token) : un formulaire
     forgé depuis un autre site ne le connaît pas. Seconde barrière après le cookie SameSite=Strict et le contrôle d'origine."""
-    if request.method != "POST" or request.url.path == "/connexion":
-        return
+    if request.method != "POST" or request.url.path == "/connexion" or request.url.path.startswith("/connexion/"):
+        return                      # demander un lien ou le confirmer se fait sans session : le lien lui-même est la preuve
     cookie = request.cookies.get(cx.COOKIE)
     uid = cx.lire_session(cookie)
     if not uid:
@@ -61,11 +61,68 @@ EN_TETES_SECURITE = {"Content-Security-Policy": CSP, "X-Content-Type-Options": "
                      "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Resource-Policy": "same-origin"}
 
 
+CORPS_MAX = 2 * 1024 * 1024      # aucune requête du bureau n'approche cette taille (le plus gros envoi est un manifeste de 64 Ko)
+_PUBLIC_EN_CACHE = ("/static/", "/portraits/", "/agents/")
+
+
+class _CorpsTropGros(Exception):
+    pass
+
+
+class LimiteCorps:
+    """Refuse une requête dont le corps dépasse CORPS_MAX, avant qu'il ne soit lu en mémoire ou écrit sur le disque : la taille
+    annoncée d'abord, puis le compte réel des octets reçus (une taille annoncée peut mentir ou manquer)."""
+
+    def __init__(self, application):
+        self.application = application
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.application(scope, receive, send)
+        annonce = dict(scope.get("headers") or []).get(b"content-length", b"")
+        etat = {"recu": 0, "commence": False}
+
+        async def refuser():
+            corps = "requête trop volumineuse".encode()
+            en_tetes = [(b"content-type", b"text/plain; charset=utf-8"), (b"content-length", str(len(corps)).encode()), (b"connection", b"close"),
+                        (b"x-content-type-options", b"nosniff"), (b"cache-control", b"no-store")]
+            await send({"type": "http.response.start", "status": 413, "headers": en_tetes})
+            await send({"type": "http.response.body", "body": corps})
+
+        if annonce.isdigit() and int(annonce) > CORPS_MAX:
+            return await refuser()
+
+        async def recevoir():
+            message = await receive()
+            if message["type"] == "http.request":
+                etat["recu"] += len(message.get("body") or b"")
+                if etat["recu"] > CORPS_MAX:
+                    raise _CorpsTropGros()
+            return message
+
+        async def envoyer(message):
+            if message["type"] == "http.response.start":
+                etat["commence"] = True
+            await send(message)
+
+        try:
+            await self.application(scope, recevoir, envoyer)
+        except _CorpsTropGros:
+            if not etat["commence"]:
+                await refuser()
+
+
+app.add_middleware(LimiteCorps)
+
+
 @app.middleware("http")
 async def _en_tetes_securite(request: Request, call_next):
     reponse = await call_next(request)
     for k, v in EN_TETES_SECURITE.items():
         reponse.headers.setdefault(k, v)
+    if not request.url.path.startswith(_PUBLIC_EN_CACHE):
+        # Rien de ce que sert le bureau ne doit rester dans un cache : ni page privée, ni export, ni lien de connexion.
+        reponse.headers.setdefault("Cache-Control", "no-store")
     if _origine().startswith("https"):
         reponse.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     if request.url.path.startswith("/vitrine/"):
@@ -84,6 +141,7 @@ MESSAGES = {
     "plafond": "Plafond mensuel atteint : aucun agent n'est appelé tant qu'il n'est pas relevé.",
     "vide": "Écrivez votre demande avant d'envoyer.",
     "smtp_absent": "L'envoi d'e-mails n'est pas configuré sur ce bureau (SMTP_HOST) : aucun lien ne peut partir.",
+    "reserve": "Cette action est réservée au fondateur.",
 }
 
 
@@ -112,12 +170,18 @@ def _origine_sure(request: Request) -> bool:
     return hote == (request.headers.get("host") or "").lower() or hote == urlsplit(_origine()).netloc.lower()
 
 
-def _garde(request: Request, c: db.Connexion) -> tuple[dict | None, Response | None]:
+def _garde(request: Request, c: db.Connexion, *, fondateur: bool = False) -> tuple[dict | None, Response | None]:
+    """`fondateur=True` : ce qui engage l'entreprise (décider, installer un module, ouvrir une mise en ligne, ouvrir la page
+    publique) revient au fondateur. Un membre lit et demande ; il ne décide pas."""
     u = _utilisateur(request, c)
     if not u:
         return None, _rediriger("/connexion")
     if request.method == "POST" and not _origine_sure(request):
         return None, Response("origine refusée", status_code=403)
+    if fondateur and u.get("role") != "fondateur":
+        gouvernance.journaliser(c, u["org_id"], u["email"], "acces.refuse", request.url.path[:80], "action réservée au fondateur")
+        c.commit()
+        return None, _rediriger("/bureau", "reserve")
     return u, None
 
 
@@ -148,7 +212,7 @@ def connexion(request: Request):
 
 
 @app.post("/connexion")
-def connexion_envoyer(request: Request, email: str = Form("")):
+def connexion_envoyer(request: Request, taches: BackgroundTasks, email: str = Form("")):
     e = cx.email_valide(email)
     if not e:
         return _rediriger("/connexion", "email")
@@ -162,11 +226,21 @@ def connexion_envoyer(request: Request, email: str = Form("")):
         brut = cx.creer_jeton(c, e) if cx.inscription_possible(c, e) else None
     if brut:
         sujet, corps = cx.email_connexion(f"{_origine()}/connexion/{brut}")
-        cx.envoyer_mail(e, sujet, corps)
+        # L'envoi part après la réponse : le temps de réponse est le même pour une adresse connue et pour une inconnue.
+        taches.add_task(cx.envoyer_mail, e, sujet, corps)
     return _rediriger("/connexion", "lien")
 
 
-@app.get("/connexion/{jeton}")
+@app.get("/connexion/{jeton}", response_class=HTMLResponse)
+def connexion_confirmer(request: Request, jeton: str):
+    """Ouvrir le lien ne connecte pas : il affiche un bouton. Un antivirus de messagerie ou un aperçu de lien qui visite
+    l'adresse ne consomme donc pas le lien et n'ouvre aucune session ; seul le clic de la personne le fait."""
+    if not re.fullmatch(r"[A-Za-z0-9_-]{20,80}", jeton or ""):
+        return _rediriger("/connexion", "lien_invalide")
+    return _page(request, "connexion.html", jeton=jeton)
+
+
+@app.post("/connexion/{jeton}")
 def connexion_jeton(jeton: str):
     with db.connexion() as c:
         u = cx.consommer_jeton(c, jeton)
@@ -270,9 +344,10 @@ def demande(request: Request, texte: str = Form(""), agent: str = Form("")):
         gouvernance.journaliser(c, u["org_id"], u["email"], "demande", fiche.id, texte)
         from core import catalogue as _catalogue
 
+        # Le contexte ne porte que le nom de l'organisation : l'adresse du fondateur n'a rien à faire devant un modèle.
         res = app.state.executeur.executer(c, u["org_id"], fiche, tache="demande-fondateur",
                                            instruction=INSTRUCTION_DEMANDE.format(demande=texte, equipe=_equipe(fiches), catalogue=_catalogue.pour_agent()),
-                                           contexte={"organisation": u["organisation"], "fondateur": u["email"]})
+                                           contexte={"organisation": u["organisation"]})
         if res["statut"] == "refusee" and "plafond" in res.get("detail", ""):
             return _rediriger("/bureau", "plafond")
         sortie = res.get("sortie") or {}
@@ -298,6 +373,11 @@ def demande(request: Request, texte: str = Form(""), agent: str = Form("")):
             paquet = gouvernance.depuis_sortie_agent(fiche.signature, sortie, execution_id=res["execution_id"], portee="demande-fondateur")
             if paquet.agent_cible not in fiches:
                 paquet.agent_cible = fiche.id if paquet.tache else ""     # un agent inconnu ne peut pas être désigné
+            if paquet.tache.strip().lower().startswith("publier:"):
+                # « publier:<id> » est une tâche que seul le bureau écrit, sur la décision de publication qu'il ouvre lui-même.
+                # Écrite par un agent, elle ferait partir un autre contenu que celui que la décision annonce : elle est retirée.
+                gouvernance.journaliser(c, u["org_id"], fiche.signature, "decision.tache_retiree", res["execution_id"], "tâche de publication écrite par un agent")
+                paquet.tache, paquet.agent_cible = "", ""
             manques = paquet.valider()
             if not manques:
                 gouvernance.ouvrir(c, u["org_id"], paquet)
@@ -309,7 +389,7 @@ def demande(request: Request, texte: str = Form(""), agent: str = Form("")):
 @app.post("/decisions/{decision_id}/{action}")
 def decider(request: Request, decision_id: str, action: str, consigne: str = Form("")):
     with db.connexion() as c:
-        u, refus = _garde(request, c)
+        u, refus = _garde(request, c, fondateur=True)
         if refus:
             return refus
         try:
@@ -345,7 +425,13 @@ def _executer_apres_approbation(c: db.Connexion, u: dict, d: dict) -> None:
     if d["tache"].startswith("publier:"):
         from core import publication
 
-        res = publication.publier(c, u["org_id"], d["tache"].split(":", 1)[1], par=u["email"])
+        pid = d["tache"].split(":", 1)[1].strip()
+        pub = publication.lire(c, u["org_id"], pid)
+        if d.get("portee") != "publication" or pub is None or pub.get("decision_id") != d["id"]:
+            # La page qui part est celle que cette décision présentait, et aucune autre.
+            gouvernance.journaliser(c, u["org_id"], "bureau", "publication.refusee", d["id"], "la tâche désigne une page qui n'est pas celle de cette décision")
+            return
+        res = publication.publier(c, u["org_id"], pid, par=u["email"])
         gouvernance.journaliser(c, u["org_id"], "bureau", "publication.apres_approbation", d["id"], res.get("detail", "")[:160])
         return
     fiche = agents.charger().get(d["agent_cible"])
@@ -375,7 +461,7 @@ def _mois_valide(v: str | None) -> str:
     v = (v or "").strip()[:7]
     import re as _re
 
-    return v if _re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", v) else db.mois_courant()
+    return v if _re.fullmatch(r"20\d{2}-(0[1-9]|1[0-2])", v) else db.mois_courant()      # ce siècle : une année 0000 ou 9999 n'a pas de calendrier
 
 
 @app.get("/finances", response_class=HTMLResponse)
@@ -586,7 +672,7 @@ def vitrine_ouvrir(request: Request):
     from core import aquarium
 
     with db.connexion() as c:
-        u, refus = _garde(request, c)
+        u, refus = _garde(request, c, fondateur=True)
         if refus:
             return refus
         aquarium.ouvrir_vitrine(c, u["org_id"], par=u["email"])
@@ -598,7 +684,7 @@ def vitrine_fermer(request: Request):
     from core import aquarium
 
     with db.connexion() as c:
-        u, refus = _garde(request, c)
+        u, refus = _garde(request, c, fondateur=True)
         if refus:
             return refus
         aquarium.fermer_vitrine(c, u["org_id"], par=u["email"])
@@ -649,7 +735,7 @@ async def module_installer(request: Request):
     from pathlib import Path as _Path
 
     with db.connexion() as c:
-        u, refus = _garde(request, c)
+        u, refus = _garde(request, c, fondateur=True)
         if refus:
             return refus
         form = await request.form()
@@ -662,7 +748,7 @@ async def module_installer(request: Request):
             chemin.write_bytes(contenu)
             try:
                 m = modules.charger_manifeste(chemin)
-            except (ValueError, KeyError):
+            except (ValueError, KeyError, TypeError, AttributeError, RecursionError):
                 return _rediriger("/catalogue", "manifeste")
         res = modules.installer(c, u["org_id"], m, par=u["email"])
     return _rediriger("/catalogue", "module" if res.get("installe") else "module_refus")
@@ -783,7 +869,7 @@ def batir_deployer(request: Request):
     from core import cibles, depot
 
     with db.connexion() as c:
-        u, refus = _garde(request, c)
+        u, refus = _garde(request, c, fondateur=True)
         if refus:
             return refus
         if cibles.charger().configuration() is None or depot.configuration() is None:

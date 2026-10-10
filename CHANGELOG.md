@@ -2,6 +2,23 @@
 
 Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il y a quelque chose à faire. Les correctifs de sécurité sont marqués **sécurité**.
 
+## 0.7.5 — 2026-10-10
+
+Version de **sécurité** : ce que le bureau refuse à un agent trompé par une page ou un fichier piégé, et contrôle des accès.
+
+- **sécurité, important** — Un agent n'exécute que les outils de sa fiche. Jusqu'à la 0.7.4, un outil demandé hors de la fiche était exécuté.
+- **sécurité, important** — Dès qu'une exécution a lu une donnée privée (dépôt, finances, contacts), elle ne peut plus appeler que le site de l'entreprise (`SITE_DOMAINE`) : ni page, ni sonde de domaine ailleurs. Lire le web puis le dépôt reste permis.
+- **sécurité** — Le cadre « contenu externe » porte un identifiant tiré au hasard et toute balise contenue dans une page est neutralisée : une page ne peut plus fermer son cadre.
+- **sécurité** — La page qui part vers le site est celle de la décision approuvée, et aucune autre : une tâche de publication écrite par un agent est retirée.
+- **sécurité** — Porte de sécurité : liens `javascript:`, `eval` et lecture des cookies, redirections, `meta refresh`, images, médias et feuilles de style d'un autre domaine.
+- **sécurité** — Ouvrir le lien de connexion ne connecte plus : un bouton confirme l'entrée (un antivirus de messagerie qui visite le lien ne le consomme pas). L'envoi du lien part après la réponse.
+- **sécurité** — Décider, installer un module, ouvrir une mise en ligne ou la page publique : réservé au fondateur. Un membre lit et demande.
+- **sécurité** — `Cache-Control: no-store` sur tout ce qui n'est pas un fichier public ; requêtes plafonnées à 2 Mo ; l'adresse du fondateur n'est plus transmise au modèle.
+- **sécurité** (essai d'intrusion du 10/10) — La porte de sécurité lit désormais les balises avec un analyseur et non des expressions régulières : un fichier fabriqué pour la ralentir (plus de cent secondes auparavant) est traité en une seconde au plus, et les attributs sans guillemets, les entités et les barres inversées sont vus. Balise `base` refusée.
+- **sécurité** (essai d'intrusion) — En production, `SECRET_KEY` doit faire 32 caractères au moins : le bureau refuse de démarrer une session avec une clé plus courte. Plus d'en-tête `Server`. Caddy coupe les connexions lentes et plafonne les requêtes à 2 Mo.
+- Corrigé : erreur 500 sur un mois hors de ce siècle dans la page Finances, et sur un manifeste de module qui n'est pas un objet JSON.
+- **À faire après mise à jour** : vérifiez que `SECRET_KEY` fait 32 caractères au moins (`openssl rand -hex 32`). Si un agent vous répond « refus : cette exécution a lu des données privées », relancez la lecture du web dans une demande séparée.
+
 ## 0.7.4 — 2026-10-10
 
 Version de **sécurité**, issue d'une relecture complète du code. Mettez à jour si votre bureau est joignable depuis Internet.

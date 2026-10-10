@@ -3,12 +3,20 @@
 {% block contenu %}
 <section class="connexion">
   <p class="sur-titre">Votre bureau</p>
+  {% if jeton %}
+  <h1>Confirmer l'entrée</h1>
+  <p class="intro">Vous avez ouvert votre lien de connexion. Un dernier geste : confirmez que c'est bien vous. Le lien ne sert qu'une fois. Ce n'est pas vous ? Fermez cette page : rien ne se passe sans ce clic.</p>
+  <form method="post" action="/connexion/{{ jeton }}" class="formulaire">
+    <button class="bouton" type="submit" autofocus>Entrer dans le bureau</button>
+  </form>
+  {% else %}
   <h1>Entrer</h1>
-  <p class="intro">Pas de mot de passe : vous recevez un lien à usage unique, valable vingt minutes. La première adresse crée l'espace de votre entreprise.</p>
+  <p class="intro">Pas de mot de passe : vous recevez un lien à usage unique, valable vingt minutes. La première adresse crée l'espace de votre entreprise ; ensuite, seules les adresses qui y ont un compte reçoivent un lien.</p>
   <form method="post" action="/connexion" class="formulaire">
     <label for="email">Adresse e-mail</label>
     <input id="email" name="email" type="email" autocomplete="email" required inputmode="email" placeholder="vous@votre-entreprise.fr">
     <button class="bouton" type="submit">Recevoir le lien</button>
   </form>
+  {% endif %}
 </section>
 {% endblock %}

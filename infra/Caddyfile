@@ -1,7 +1,22 @@
 # Zelij Core derrière Caddy : certificat automatique pour {$CORE_DOMAINE}, http redirigé vers https,
 # le bureau n'est joignable que par ici. Les en-têtes de sécurité sont posés par le bureau lui-même.
+{
+	servers {
+		# Une connexion qui n'envoie jamais ses en-têtes ou son corps est coupée : le bureau lui-même n'a pas ces délais.
+		timeouts {
+			read_header 10s
+			read_body 30s
+			idle 2m
+		}
+	}
+}
+
 {$CORE_DOMAINE} {
 	encode zstd gzip
+	# Même plafond que le bureau (2 Mo) : une requête démesurée est refusée ici, avant d'atteindre l'application.
+	request_body {
+		max_size 2MB
+	}
 	reverse_proxy core-app:8000 {
 		header_up X-Forwarded-Proto {scheme}
 		header_up X-Forwarded-For {remote_host}

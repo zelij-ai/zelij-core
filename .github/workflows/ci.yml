@@ -43,6 +43,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Construction de l'image
         run: docker build -t zelij-core:ci .
+      - name: Fichier Caddy valide
+        run: |
+          docker run --rm -e CORE_DOMAINE=bureau.exemple.fr -v "$PWD/infra/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine \
+            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Démarrage à blanc
         run: |
           docker run -d --name core -e CORE_ENV=production -e SECRET_KEY=ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci \

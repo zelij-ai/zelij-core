@@ -91,7 +91,7 @@ If you already run a TLS server (Nginx, Traefik, another Caddy), keep `docker-co
 ## 6. First login
 
 1. Open the office, type your e-mail address, request the link.
-2. Click the link you receive (valid twenty minutes, once). **The first address that logs in creates the organisation and becomes the founder; after that, no unknown address receives a link.** An installation holds a single organisation: your keys (model, payments, repository, server) serve it alone. If the office is reachable before your first login, set `FONDATEUR_EMAIL=you@your-domain.com` in `.env`: only that address will be able to create the organisation.
+2. Open the link you receive (valid twenty minutes, once) then click "Entrer dans le bureau": opening the link is not enough, so that a mail scanner visiting it cannot use it up in your place. **The first address that logs in creates the organisation and becomes the founder; after that, no unknown address receives a link.** An installation holds a single organisation: your keys (model, payments, repository, server) serve it alone. If the office is reachable before your first login, set `FONDATEUR_EMAIL=you@your-domain.com` in `.env`: only that address will be able to create the organisation.
 3. You land on the Office: the chief of staff is waiting. Make a simple request to check the Claude key works: "Introduce me to the team". The cost of the call shows immediately in the monthly counter.
 
 Inviting someone: the Contacts page is not for that; an invitation is a login link carrying your organisation's identifier. That feature comes with the full edition; in the free edition the office is the founder's.

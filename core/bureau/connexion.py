@@ -27,6 +27,7 @@ _demandes: dict[str, list[float]] = {}
 # est un relais de courriels : n'importe qui ferait envoyer des milliers de messages depuis le SMTP du fondateur.
 FREINS = {"email": (5, 900), "ip": (10, 900), "global": (60, 3600)}
 _CLES_MAX = 5000
+CLE_MIN = 32
 _secret_dev: bytes | None = None
 # Les clés du .env (modèle, paiement, dépôt, serveur) appartiennent à l'installation, pas à une organisation : une seconde
 # organisation les utiliserait toutes. Le noyau n'en admet donc qu'une. Seuls les tests lèvent cette règle.
@@ -36,10 +37,11 @@ UNE_SEULE_ORGANISATION = True
 def _secret() -> bytes:
     global _secret_dev
     s = os.environ.get("SECRET_KEY", "")
+    if os.environ.get("CORE_ENV") == "production" and len(s) < CLE_MIN:
+        # Toute la confiance dans les sessions repose sur cette clé : absente ou devinable, n'importe qui se fabrique un cookie de fondateur.
+        raise RuntimeError(f"SECRET_KEY absente ou trop courte en production : {CLE_MIN} caractères aléatoires au moins")
     if s:
         return s.encode()
-    if os.environ.get("CORE_ENV") == "production":
-        raise RuntimeError("SECRET_KEY absente en production")
     if _secret_dev is None:
         # Hors production : une clé aléatoire par processus, jamais une constante connue de tous (les sessions tombent au redémarrage).
         _secret_dev = secrets.token_bytes(32)

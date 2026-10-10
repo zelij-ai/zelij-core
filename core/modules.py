@@ -53,9 +53,11 @@ class Manifeste:
 
 def charger_manifeste(chemin: Path) -> Manifeste:
     d = json.loads(Path(chemin).read_text(encoding="utf-8"))
+    if not isinstance(d, dict):
+        raise ValueError(f"manifeste {chemin} : un objet JSON est attendu")
     for k in ("nom", "version", "type", "interface", "fournisseur"):
-        if not d.get(k):
-            raise ValueError(f"manifeste {chemin} : champ `{k}` manquant")
+        if not d.get(k) or not isinstance(d[k], str):
+            raise ValueError(f"manifeste {chemin} : champ `{k}` manquant ou mal formé")
     if d["type"] not in TYPES:
         raise ValueError(f"manifeste {chemin} : type inconnu {d['type']}")
     cible = d.get("cible") if isinstance(d.get("cible"), dict) else None

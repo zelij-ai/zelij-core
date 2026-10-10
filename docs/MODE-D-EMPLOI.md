@@ -54,7 +54,9 @@ Les pages rédigées par les agents : brouillon, proposée (demande de fusion ou
 
 **Suivre.** Chaque exécution est enregistrée : entrée, sortie, outils appelés, jetons, coût, durée. Le journal garde qui a fait quoi. Rien n'est effacé.
 
-**Ce que renvoient les outils de lecture** (pages web, fichiers du dépôt) arrive aux agents encadré comme « contenu externe » : des données, jamais des consignes. Une page qui contiendrait des instructions destinées aux agents ne les fera pas agir.
+**Ce que renvoient les outils de lecture** (pages web, fichiers du dépôt) arrive aux agents encadré comme « contenu externe » : des données, jamais des consignes. Aucun modèle n'est à l'abri d'une page écrite pour le tromper ; le bureau ne compte donc pas sur sa seule vigilance. Trois règles tiennent dans le code, même si un agent se laisse convaincre : il n'exécute que les outils de sa fiche ; dès qu'il a lu une donnée privée (dépôt, finances, contacts), il ne peut plus appeler que votre site ; et rien ne part en ligne sans une décision de mise en ligne approuvée par vous.
+
+**Fondateur et membres.** Le fondateur décide, installe les modules, ouvre une mise en ligne et la page publique. Un membre rattaché à l'organisation lit et fait des demandes aux agents ; il ne décide pas.
 
 ## Tenir le coût
 

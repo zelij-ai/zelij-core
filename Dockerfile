@@ -16,4 +16,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=4)"
 # Les en-têtes X-Forwarded-* ne sont crus que s'ils viennent d'une adresse de FORWARDED_ALLOW_IPS (lue par uvicorn ; par défaut
 # la boucle locale seulement). docker-compose.tls.yml y met le réseau du serveur Caddy : personne d'autre ne peut se dire « l'adresse du visiteur ».
-CMD ["sh", "-c", "python -m core.schema && uvicorn core.bureau.app:app --host 0.0.0.0 --port 8000 --proxy-headers"]
+CMD ["sh", "-c", "python -m core.schema && uvicorn core.bureau.app:app --host 0.0.0.0 --port 8000 --proxy-headers --no-server-header"]

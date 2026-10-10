@@ -5,6 +5,8 @@ installer), en-têtes de sécurité et certificat à l'arrivée. Un rouge bloque
 from __future__ import annotations
 
 import re
+from collections import Counter
+from html.parser import HTMLParser
 from pathlib import PurePosixPath
 
 import httpx
@@ -16,6 +18,9 @@ INTERDITS_CHEMINS = ("Dockerfile", "docker-compose.yml", "docker-compose.yaml", 
 # Variantes que les outils chargent d'eux-mêmes : compose.yaml, docker-compose.override.yml, Dockerfile.prod…
 INTERDITS_MOTIF = re.compile(r"(^|/)((docker-)?compose[\w.-]*\.ya?ml|dockerfile[\w.-]*)$", re.I)
 EXTENSIONS_TEXTE = {".html", ".htm", ".css", ".js", ".mjs", ".json", ".md", ".txt", ".xml", ".svg", ".py", ".toml", ".yml", ".yaml", ".csv", ".webmanifest"}
+# Règles de texte. Toutes sont écrites pour un temps proportionnel à la taille du fichier : quantificateurs possessifs (*+, ++, ?+),
+# donc aucun retour arrière, même sur un contenu fabriqué pour ralentir le serveur. Les balises HTML ne sont plus cherchées par
+# expression régulière : un analyseur les lit (voir _Balises), ce qui voit aussi les attributs sans guillemets.
 MOTIFS_SECRETS = [
     (re.compile(r"sk-ant-[A-Za-z0-9_-]{10,}"), "clé d'API Anthropic"),
     (re.compile(r"-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----"), "clé privée"),
@@ -23,16 +28,90 @@ MOTIFS_SECRETS = [
     (re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b"), "jeton GitHub"),
     (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "clé AWS"),
     (re.compile(r"\b(sk|rk)_(live|test)_[A-Za-z0-9]{10,}\b"), "clé Stripe"),
-    (re.compile(r"(password|mot_de_passe|passwd|secret)\s*[:=]\s*['\"][^'\"]{6,}['\"]", re.I), "mot de passe ou secret en clair"),
+    (re.compile(r"(password|mot_de_passe|passwd|secret)\s*+[:=]\s*+['\"][^'\"]{6,}+['\"]", re.I), "mot de passe ou secret en clair"),
     # Une adresse externe s'écrit « https://… », « http://… » ou, sans protocole, « //… » : les trois formes sont reconnues.
-    # jsDelivr n'est admis que pour les paquets npm (/npm/) : son chemin /gh/ sert n'importe quel dépôt GitHub.
-    (re.compile(r"<script[^>]+src=[\"'](?:https?:)?//(?!(?:cdn\.jsdelivr\.net/npm|cdnjs\.cloudflare\.com|unpkg\.com)/)", re.I), "script tiers chargé depuis un domaine inconnu"),
-    (re.compile(r"<(?:iframe|embed|object)[^>]+(?:src|data)=[\"'](?:https?:)?//", re.I), "cadre ou objet tiers embarqué (iframe, embed, object)"),
-    (re.compile(r"<link[^>]+href=[\"'](?:https?:)?//(?!(?:fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net/npm|cdnjs\.cloudflare\.com|unpkg\.com)/)", re.I), "ressource tierce liée depuis un domaine inconnu"),
-    (re.compile(r"\b(?:fetch|XMLHttpRequest|navigator\.sendBeacon|new WebSocket|import)\s*\(?\s*[\"'](?:https?:)?//", re.I), "appel réseau vers un domaine externe dans le code"),
-    (re.compile(r"<form[^>]+action=[\"'](?:https?:)?//", re.I), "formulaire qui envoie vers un domaine externe"),
-    (re.compile(r"[\"'](?:preinstall|install|postinstall|prepare)[\"']\s*:", re.I), "script exécuté à l'installation des dépendances (npm)"),
+    (re.compile(r"\b(?:fetch|XMLHttpRequest|navigator\.sendBeacon|new\s++WebSocket|import)\s*+\(?+\s*+[\"'`](?:https?:)?//", re.I), "appel réseau vers un domaine externe dans le code"),
+    (re.compile(r"[\"'](?:preinstall|install|postinstall|prepare)[\"']\s*+:", re.I), "script exécuté à l'installation des dépendances (npm)"),
+    # Ce qu'une page n'a pas à contenir quand elle est proposée par un agent : le fondateur peut l'ajouter lui-même s'il le veut.
+    (re.compile(r"[\"'`]\s*+(?:javascript|vbscript)\s*+:", re.I), "lien ou source en javascript:"),
+    (re.compile(r"\b(?:eval|atob|unescape)\s*+\(|\bnew\s++Function\s*+\(|\bdocument\.cookie\b|\bdocument\.write\s*+\(", re.I), "code dynamique ou lecture des cookies (eval, atob, new Function, document.cookie)"),
+    (re.compile(r"\blocation(?:\.href)?+\s*+=\s*+[\"'`](?:https?:)?//|\blocation\.(?:replace|assign)\s*+\(\s*+[\"'`](?:https?:)?//", re.I), "redirection vers un domaine externe"),
+    (re.compile(r"url\(\s*+[\"']?+(?:https?:)?//(?!fonts\.(?:gstatic|googleapis)\.com/)", re.I), "ressource CSS chargée depuis un autre domaine"),
+    (re.compile(r"@import\s++(?:url\(\s*+)?+[\"']?+(?:https?:)?//(?!fonts\.googleapis\.com/)", re.I), "feuille de style importée depuis un autre domaine"),
 ]
+# jsDelivr n'est admis que pour les paquets npm (/npm/) : son chemin /gh/ sert n'importe quel dépôt GitHub.
+_CDN_SCRIPTS = ("cdn.jsdelivr.net/npm/", "cdnjs.cloudflare.com/", "unpkg.com/")
+_CDN_LIENS = _CDN_SCRIPTS + ("fonts.googleapis.com/", "fonts.gstatic.com/")
+_ATTRIBUTS_ADRESSE = ("href", "src", "action", "formaction", "xlink:href", "data", "poster", "background", "ping", "manifest")
+_BLANCS = re.compile(r"[\x00-\x20]+")
+
+
+def _adresse(valeur: str | None) -> str:
+    """L'adresse telle qu'un navigateur la lit : sans blancs ni caractères de contrôle, en minuscules, barres obliques droites."""
+    return _BLANCS.sub("", valeur or "").lower().replace("\\", "/")
+
+
+def _externe(valeur: str | None, admis: tuple = ()) -> bool:
+    v = _adresse(valeur)
+    if v.startswith("//"):
+        reste = v[2:]
+    elif v.startswith(("http://", "https://")):
+        reste = v.split("//", 1)[1]
+    else:
+        return False
+    if "/" not in reste:
+        reste += "/"                # « https://fonts.gstatic.com » sans chemin désigne le même hôte que « https://fonts.gstatic.com/ »
+    return not (admis and reste.startswith(admis))
+
+
+def _active(valeur: str | None) -> bool:
+    return _adresse(valeur).startswith(("javascript:", "vbscript:", "data:text/html"))
+
+
+class _Balises(HTMLParser):
+    """Lit les balises d'un fichier comme un navigateur les lirait (attributs avec ou sans guillemets, entités décodées) et
+    relève ce qu'une proposition d'agent ne doit pas contenir. Temps proportionnel à la taille."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.constats: list[str] = []
+
+    def _noter(self, libelle: str) -> None:
+        if libelle not in self.constats:
+            self.constats.append(libelle)
+
+    def handle_starttag(self, tag, attrs):
+        a = {str(k).lower(): (v or "") for k, v in attrs}
+        if any(_active(a.get(n)) for n in _ATTRIBUTS_ADRESSE):
+            self._noter("lien ou source en javascript:")
+        if tag == "script" and _externe(a.get("src"), _CDN_SCRIPTS):
+            self._noter("script tiers chargé depuis un domaine inconnu")
+        if tag == "link" and _externe(a.get("href"), _CDN_LIENS):
+            self._noter("ressource tierce liée depuis un domaine inconnu")
+        if tag in ("iframe", "frame", "embed", "object") and (_externe(a.get("src")) or _externe(a.get("data"))):
+            self._noter("cadre ou objet tiers embarqué (iframe, embed, object)")
+        if (tag == "form" and _externe(a.get("action"))) or _externe(a.get("formaction")):
+            self._noter("formulaire qui envoie vers un domaine externe")
+        if tag in ("img", "video", "audio", "source", "track", "input", "image", "use", "feimage"):
+            adresses = [a.get("src"), a.get("poster"), a.get("href"), a.get("xlink:href")] + [c.strip().split(" ")[0] for c in a.get("srcset", "").split(",")]
+            if any(_externe(x) for x in adresses):
+                self._noter("image ou média chargé depuis un autre domaine (utiliser un chemin relatif)")
+        if tag == "meta" and a.get("http-equiv", "").strip().lower() == "refresh":
+            self._noter("redirection automatique (meta refresh)")
+        if tag == "base" and a.get("href"):
+            self._noter("balise base : elle détourne toutes les adresses relatives de la page")
+
+
+def constats_balises(contenu: str) -> list[str]:
+    analyseur = _Balises()
+    try:
+        analyseur.feed(contenu)
+        analyseur.close()
+    except Exception:  # noqa: BLE001 — un fichier que l'analyseur ne sait pas lire n'est pas proposé
+        return analyseur.constats + ["contenu illisible par l'analyseur HTML"]
+    return analyseur.constats
+
+
 EN_TETES_ATTENDUS = ("strict-transport-security", "x-content-type-options", "content-security-policy", "referrer-policy")
 OSV = "https://api.osv.dev/v1/querybatch"
 
@@ -50,6 +129,10 @@ def controler_diff(fichiers: dict[str, str], existants: dict[str, str] | None = 
     constats: list[str] = []
     lignes = 0
     octets = 0
+    # La taille d'abord : rien n'est analysé au-delà du plafond, pour qu'un lot démesuré ne coûte rien au serveur.
+    total = sum(len(c.encode("utf-8", errors="replace")) for c in fichiers.values() if isinstance(c, str))
+    if total > OCTETS_MAX:
+        return {"ok": False, "constats": [f"{total} octets proposés : plafond {OCTETS_MAX}"], "lignes": 0}
     for chemin, contenu in fichiers.items():
         sur = _chemin_sur(chemin)
         if sur is None:
@@ -64,9 +147,9 @@ def controler_diff(fichiers: dict[str, str], existants: dict[str, str] | None = 
             constats.append(f"{sur} : contenu illisible")
             continue
         octets += len(contenu.encode("utf-8", errors="replace"))
-        for motif, libelle in MOTIFS_SECRETS:
-            if motif.search(contenu):
-                constats.append(f"{sur} : {libelle}")
+        trouves = constats_balises(contenu)
+        trouves += [libelle for motif, libelle in MOTIFS_SECRETS if libelle not in trouves and motif.search(contenu)]
+        constats.extend(f"{sur} : {libelle}" for libelle in trouves)
         avant = (existants.get(sur) or "").splitlines()
         apres = contenu.splitlines()
         lignes += _lignes_changees(avant, apres)
@@ -80,6 +163,10 @@ def controler_diff(fichiers: dict[str, str], existants: dict[str, str] | None = 
 def _lignes_changees(avant: list[str], apres: list[str]) -> int:
     import difflib
 
+    if len(avant) > 2000 or len(apres) > 2000:
+        # Gros fichier : compte des lignes ajoutées ou retirées, en temps proportionnel (la comparaison fine est quadratique).
+        a, b = Counter(avant), Counter(apres)
+        return max(sum((b - a).values()), sum((a - b).values()))
     n = 0
     for op, i1, i2, j1, j2 in difflib.SequenceMatcher(None, avant, apres, autojunk=False).get_opcodes():
         if op != "equal":

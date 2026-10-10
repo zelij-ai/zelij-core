@@ -54,7 +54,9 @@ The pages written by the agents: draft, proposed (pull request open or draft dep
 
 **Follow.** Every run is recorded: input, output, tools called, tokens, cost, duration. The journal keeps who did what. Nothing is erased.
 
-**What reading tools return** (web pages, repository files) reaches the agents framed as "external content": data, never instructions. A page containing instructions aimed at the agents will not make them act.
+**What reading tools return** (web pages, repository files) reaches the agents framed as "external content": data, never instructions. No model is immune to a page written to deceive it, so the office does not rely on its vigilance alone. Three rules hold in the code even if an agent is talked into something: it only runs the tools on its sheet; once it has read private data (repository, finances, contacts) it can only call your own site; and nothing goes live without a go-live decision approved by you.
+
+**Founder and members.** The founder decides, installs modules, opens a go-live and the public page. A member attached to the organisation reads and makes requests to the agents; a member does not decide.
 
 ## Keeping the cost in check
 

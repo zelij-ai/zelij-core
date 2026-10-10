@@ -50,7 +50,7 @@ def _connecter(email):
     client = TestClient(bureau.app, follow_redirects=False)
     _demander(client, email)
     lien = re.search(r"http://testserver/connexion/(\S+)", ENVOIS[-1][2]).group(1)
-    assert client.get(f"/connexion/{lien}").status_code == 303
+    assert client.post(f"/connexion/{lien}").status_code == 303
     client.headers["origin"] = "http://testserver"
     client.headers["x-csrf-token"] = cx.jeton_csrf(cx.lire_session(client.cookies[cx.COOKIE]))
     return client
@@ -88,8 +88,8 @@ def test_c1_deux_liens_demandes_avant_la_creation_un_seul_cree_l_organisation(in
     lien_a = re.search(r"/connexion/(\S+)", ENVOIS[-1][2]).group(1)
     _demander(b, "second@ailleurs.example")                  # aucune organisation n'existe encore : le lien part
     lien_b = re.search(r"/connexion/(\S+)", ENVOIS[-1][2]).group(1)
-    assert a.get(f"/connexion/{lien_a}").headers["location"] == "/bureau"
-    assert b.get(f"/connexion/{lien_b}").headers["location"].endswith("m=lien_invalide")      # contrôle refait au clic
+    assert a.post(f"/connexion/{lien_a}").headers["location"] == "/bureau"
+    assert b.post(f"/connexion/{lien_b}").headers["location"].endswith("m=lien_invalide")      # contrôle refait au clic
     with db.connexion() as c:
         assert [u["email"] for u in c.lignes("SELECT email FROM utilisateurs")] == ["premier@entreprise.fr"]
 

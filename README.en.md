@@ -62,7 +62,7 @@ What the core guarantees, and what is tested (`tests/test_securite.py`):
 - **Login**: single-use 20-minute links, hashed in the database; brakes per address, per IP and global on link requests, so the office never becomes an e-mail relay; without SMTP configured in production, no link is created or logged.
 - **Forms**: HMAC session cookie, `HttpOnly`, `SameSite=Strict`, origin check and a per-session anti-CSRF token on every POST.
 - **Pages**: strict content security policy (`default-src 'self'`, no inline script, no frames), `nosniff`, `X-Frame-Options`, `Referrer-Policy`, HSTS when the origin is https.
-- **Agents**: whatever an agent reads (web page, repository file) reaches it framed as external content, never as instructions; it only reads public https addresses (private, loopback, link-local addresses and internal names refused at every redirect hop, capped response); the security gate blocks secrets, infrastructure files, third-party scripts, frames and network calls.
+- **Agents**: whatever an agent reads (web page, repository file) reaches it framed as external content, never as instructions; an agent only runs the tools on its sheet and, once it has read private data, can only call the company's own site; it only reads public https addresses (private, loopback, link-local addresses and internal names refused at every redirect hop, capped response); the security gate blocks secrets, infrastructure files, third-party scripts, frames and network calls.
 - **Container**: unprivileged user, read-only filesystem, no capabilities, no privilege escalation; the SSH server's host key can be pinned (`SSH_CLE_HOTE`).
 - **Accounting export**: cells that look like a spreadsheet formula are neutralized.
 
