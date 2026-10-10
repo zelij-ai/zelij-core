@@ -251,7 +251,9 @@ def test_f6_dependances_au_dessus_des_versions_corrigees():
     versions = dict(porte_securite.paquets_requirements(req))
     def au_moins(v, mini):
         return tuple(int(x) for x in v.split(".")) >= tuple(int(x) for x in mini.split("."))
-    assert au_moins(versions["fastapi"], "0.143.0") and au_moins(versions["python-multipart"], "0.0.27") and au_moins(versions["pytest"], "9.0.3")
+    dev = dict(porte_securite.paquets_requirements((RACINE / "requirements-dev.txt").read_text(encoding="utf-8")))
+    assert au_moins(versions["fastapi"], "0.143.0") and au_moins(versions["python-multipart"], "0.0.27") and au_moins(dev["pytest"], "9.0.3")
+    assert "pytest" not in versions and ">=" not in req      # l'image n'embarque pas les outils de test ; chaque dépendance est épinglée
     import starlette
 
     assert au_moins(starlette.__version__, "1.3.1")

@@ -1,5 +1,6 @@
 # Zelij Core en une commande : `cp .env.example .env`, remplir, puis `docker compose up -d --build`.
-# Le bureau écoute sur le port 8000 de la machine. Pour l'https, ajoutez docker-compose.tls.yml (Caddy, certificat automatique) : voir docs/INSTALLATION.md.
+# Le bureau écoute sur le port 8000 de la machine, joignable depuis la machine seulement (127.0.0.1) : en http, rien ne doit
+# sortir sur le réseau. Pour l'ouvrir au public, ajoutez docker-compose.tls.yml (Caddy, https, certificat automatique) : voir docs/INSTALLATION.md.
 name: zelij-core
 services:
   core-db:
@@ -37,7 +38,7 @@ services:
       - core-modules:/srv/app/modules
       - ./portraits:/srv/app/portraits:ro     # vos photos (fondateur.webp, <agent>.webp), voir portraits/README.md
     ports:
-      - "${CORE_PORT:-8000}:8000"
+      - "${CORE_ECOUTE:-127.0.0.1}:${CORE_PORT:-8000}:8000"
     depends_on:
       core-db:
         condition: service_healthy

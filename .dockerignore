@@ -1,0 +1,13 @@
+# Rien de local ne part dans le contexte de construction : ni secrets, ni données, ni historique.
+.env
+.env.*
+!.env.example
+.git
+.github
+data
+tests
+docs
+.venv
+__pycache__
+*.pyc
+.pytest_cache

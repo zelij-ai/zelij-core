@@ -11,20 +11,27 @@ import httpx
 
 LIGNES_MAX = 300
 OCTETS_MAX = 400_000
-INTERDITS_CHEMINS = ("Dockerfile", "docker-compose.yml", "docker-compose.yaml", ".env", ".github/workflows/", "systemd/", ".service", "Caddyfile", "nginx.conf")
+INTERDITS_CHEMINS = ("Dockerfile", "docker-compose.yml", "docker-compose.yaml", ".env", ".github/workflows/", "systemd/", ".service", "Caddyfile", "nginx.conf",
+                     "netlify.toml", "vercel.json", "wrangler.toml", "render.yaml", "fly.toml")
+# Variantes que les outils chargent d'eux-mêmes : compose.yaml, docker-compose.override.yml, Dockerfile.prod…
+INTERDITS_MOTIF = re.compile(r"(^|/)((docker-)?compose[\w.-]*\.ya?ml|dockerfile[\w.-]*)$", re.I)
 EXTENSIONS_TEXTE = {".html", ".htm", ".css", ".js", ".mjs", ".json", ".md", ".txt", ".xml", ".svg", ".py", ".toml", ".yml", ".yaml", ".csv", ".webmanifest"}
 MOTIFS_SECRETS = [
     (re.compile(r"sk-ant-[A-Za-z0-9_-]{10,}"), "clé d'API Anthropic"),
     (re.compile(r"-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----"), "clé privée"),
-    (re.compile(r"\bghp_[A-Za-z0-9]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b"), "jeton GitHub"),
+    # tous les préfixes de jetons GitHub : personnel (ghp_, github_pat_), OAuth (gho_), utilisateur (ghu_), installation (ghs_), rafraîchissement (ghr_)
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b"), "jeton GitHub"),
     (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "clé AWS"),
     (re.compile(r"\b(sk|rk)_(live|test)_[A-Za-z0-9]{10,}\b"), "clé Stripe"),
     (re.compile(r"(password|mot_de_passe|passwd|secret)\s*[:=]\s*['\"][^'\"]{6,}['\"]", re.I), "mot de passe ou secret en clair"),
-    (re.compile(r"<script[^>]+src=[\"']https?://(?!(?:cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com)/)", re.I), "script tiers chargé depuis un domaine inconnu"),
-    (re.compile(r"<(?:iframe|embed|object)[^>]+(?:src|data)=[\"']https?://", re.I), "cadre ou objet tiers embarqué (iframe, embed, object)"),
-    (re.compile(r"<link[^>]+href=[\"']https?://(?!(?:fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com)/)", re.I), "ressource tierce liée depuis un domaine inconnu"),
-    (re.compile(r"\b(?:fetch|XMLHttpRequest|navigator\.sendBeacon|new WebSocket)\s*\(?\s*[\"']https?://", re.I), "appel réseau vers un domaine externe dans le code"),
-    (re.compile(r"<form[^>]+action=[\"']https?://", re.I), "formulaire qui envoie vers un domaine externe"),
+    # Une adresse externe s'écrit « https://… », « http://… » ou, sans protocole, « //… » : les trois formes sont reconnues.
+    # jsDelivr n'est admis que pour les paquets npm (/npm/) : son chemin /gh/ sert n'importe quel dépôt GitHub.
+    (re.compile(r"<script[^>]+src=[\"'](?:https?:)?//(?!(?:cdn\.jsdelivr\.net/npm|cdnjs\.cloudflare\.com|unpkg\.com)/)", re.I), "script tiers chargé depuis un domaine inconnu"),
+    (re.compile(r"<(?:iframe|embed|object)[^>]+(?:src|data)=[\"'](?:https?:)?//", re.I), "cadre ou objet tiers embarqué (iframe, embed, object)"),
+    (re.compile(r"<link[^>]+href=[\"'](?:https?:)?//(?!(?:fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net/npm|cdnjs\.cloudflare\.com|unpkg\.com)/)", re.I), "ressource tierce liée depuis un domaine inconnu"),
+    (re.compile(r"\b(?:fetch|XMLHttpRequest|navigator\.sendBeacon|new WebSocket|import)\s*\(?\s*[\"'](?:https?:)?//", re.I), "appel réseau vers un domaine externe dans le code"),
+    (re.compile(r"<form[^>]+action=[\"'](?:https?:)?//", re.I), "formulaire qui envoie vers un domaine externe"),
+    (re.compile(r"[\"'](?:preinstall|install|postinstall|prepare)[\"']\s*:", re.I), "script exécuté à l'installation des dépendances (npm)"),
 ]
 EN_TETES_ATTENDUS = ("strict-transport-security", "x-content-type-options", "content-security-policy", "referrer-policy")
 OSV = "https://api.osv.dev/v1/querybatch"
@@ -49,7 +56,7 @@ def controler_diff(fichiers: dict[str, str], existants: dict[str, str] | None = 
             constats.append(f"{chemin} : chemin refusé (absolu, remontant ou caché)")
             continue
         nom = PurePosixPath(sur).name
-        if any(sur.startswith(i) or sur.endswith(i) or nom == i for i in INTERDITS_CHEMINS):
+        if any(sur.startswith(i) or sur.endswith(i) or nom == i for i in INTERDITS_CHEMINS) or INTERDITS_MOTIF.search(sur):
             constats.append(f"{sur} : fichier d'infrastructure ou de service, hors périmètre du Bâtisseur")
         if PurePosixPath(sur).suffix.lower() not in EXTENSIONS_TEXTE:
             constats.append(f"{sur} : type de fichier non autorisé (texte seulement)")

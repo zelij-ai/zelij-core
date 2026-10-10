@@ -15,7 +15,7 @@ Vous avez construit une cible (un hébergeur, un cloud) ou un module avec la Sof
 ## Écrire la contribution
 
 1. Forkez, créez une branche nommée par ce qu'elle fait (`correctif-export-csv`, `cible-hetzner`).
-2. Installez : `pip install -r requirements.txt`, puis `python -m pytest -q` doit être vert avant de toucher quoi que ce soit.
+2. Installez : `pip install -r requirements-dev.txt`, puis `python -m pytest -q` doit être vert avant de toucher quoi que ce soit.
 3. **Un test par changement.** Une correction vient avec le test qui échouait ; une fonction vient avec son test. Pas de test, pas de fusion.
 4. Respectez la maison : français dans les noms, les messages et les commentaires ; pas de bibliothèque ajoutée sans l'avoir dit dans l'issue ; aucun appel réseau dans les tests (les clients `httpx` sont injectables, servez-vous-en) ; aucune donnée réelle (adresses, noms, clés) dans le code ni dans les tests.
 5. Avant d'ouvrir la demande de fusion :

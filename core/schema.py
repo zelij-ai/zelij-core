@@ -69,6 +69,7 @@ AJOUTS = [
     ("decisions", "tache", "TEXT NOT NULL DEFAULT ''"),
     ("decisions", "execution_apres", "TEXT"),
     ("organisations", "jeton_public", "TEXT"),       # lot 4 : page publique « regardez nos agents travailler »
+    ("utilisateurs", "session_n", "INTEGER NOT NULL DEFAULT 0"),   # 0.7.4 : la déconnexion révoque les cookies déjà émis
 ]
 
 

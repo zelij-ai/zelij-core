@@ -1,7 +1,7 @@
 """Passerelle vers les modèles : la clé du fondateur, le coût de chaque appel, le plafond mensuel.
 
-Tarifs publics par million de tokens, relevés le 06/10/2026 sur la page de tarifs de l'éditeur ; à mettre à jour avec la
-date du relevé. Le coût est calculé à partir de `usage` de chaque réponse et enregistré avec l'exécution. Le plafond
+Tarifs publics par million de tokens, relevés le 10/10/2026 sur la page de tarifs de l'éditeur
+(https://platform.claude.com/docs/en/about-claude/pricing) ; à mettre à jour avec la date du relevé. Le coût est calculé à partir de `usage` de chaque réponse et enregistré avec l'exécution. Le plafond
 mensuel (en euros) bloque tout nouvel appel quand il est atteint : un agent qui coûte sans prévenir trahit la promesse."""
 from __future__ import annotations
 
@@ -10,12 +10,14 @@ from typing import Any
 
 TARIFS_USD_PAR_MILLION = {   # (entrée, sortie, lecture de cache)
     "claude-opus-5-5": (4.00, 20.00, 0.20),
-    "claude-sonnet-5-5": (2.00, 10.00, 0.20),
+    "claude-sonnet-5-5": (2.00, 10.00, 0.10),
     "claude-haiku-5-5": (0.10, 0.50, 0.01),
     "claude-opus-5": (5.00, 25.00, 0.50),
     "claude-sonnet-5": (2.00, 10.00, 0.20),
 }
-TARIFS_RELEVES_LE = "2026-10-06"
+# Palier : au-delà de ce nombre de tokens d'entrée dans une requête, le tarif de la requête change (entrée, sortie, lecture de cache).
+PALIERS_USD_PAR_MILLION = {"claude-haiku-5-5": (100_000, (0.50, 2.50, 0.05))}
+TARIFS_RELEVES_LE = "2026-10-10"
 
 
 def taux_usd_eur() -> float:
@@ -40,6 +42,9 @@ def cout_usd(modele: str, usage: Any) -> float:
     t_in = int(lire("input_tokens") or 0)
     t_out = int(lire("output_tokens") or 0)
     t_cache = int(lire("cache_read_input_tokens") or 0)
+    seuil, tarif_haut = PALIERS_USD_PAR_MILLION.get(modele, (0, None))
+    if tarif_haut and t_in + t_cache > seuil:
+        entree, sortie, cache = tarif_haut
     return round((t_in * entree + t_out * sortie + t_cache * cache) / 1_000_000, 6)
 
 

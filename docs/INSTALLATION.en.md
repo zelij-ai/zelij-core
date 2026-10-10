@@ -56,6 +56,8 @@ docker compose logs -f core-app
 
 When the logs show `Uvicorn running on http://0.0.0.0:8000`, open http://localhost:8000. Check: http://localhost:8000/healthz answers `{"ok": true, "service": "zelij-core", "version": "…"}`.
 
+Port 8000 is reachable from the machine itself only (`127.0.0.1`): over plain http, neither the login link nor the session should travel on a network. To open the office to others, go through chapter 5 (https). If you know what you are doing (trusted private network), `CORE_ECOUTE=0.0.0.0` in `.env` publishes the port on every interface.
+
 Without SMTP, the login link is written to the container logs (never in production): request a link on the login page, then copy the `http://localhost:8000/connexion/…` address from `docker compose logs core-app`.
 
 ### Without building the image
@@ -84,12 +86,12 @@ docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d --build
 
 Check: https://office.your-domain.com/healthz answers, the padlock is there, and http://office.your-domain.com redirects to https. Port 8000 is no longer published on the machine: only Caddy talks to the office.
 
-If you already run a TLS server (Nginx, Traefik, another Caddy), keep `docker-compose.yml` alone and point your server to `127.0.0.1:8000` with the `X-Forwarded-For` and `X-Forwarded-Proto` headers; the office reads them.
+If you already run a TLS server (Nginx, Traefik, another Caddy), keep `docker-compose.yml` alone and point your server to `127.0.0.1:8000` with the `X-Forwarded-For` and `X-Forwarded-Proto` headers, and add `FORWARDED_ALLOW_IPS=*` to `.env`: the office trusts these headers only when you tell it to, and since the port is reachable from the machine only, your server alone can set them.
 
 ## 6. First login
 
 1. Open the office, type your e-mail address, request the link.
-2. Click the link you receive (valid twenty minutes, once). **The first address that logs in creates the organisation and becomes the founder.**
+2. Click the link you receive (valid twenty minutes, once). **The first address that logs in creates the organisation and becomes the founder; after that, no unknown address receives a link.** An installation holds a single organisation: your keys (model, payments, repository, server) serve it alone. If the office is reachable before your first login, set `FONDATEUR_EMAIL=you@your-domain.com` in `.env`: only that address will be able to create the organisation.
 3. You land on the Office: the chief of staff is waiting. Make a simple request to check the Claude key works: "Introduce me to the team". The cost of the call shows immediately in the monthly counter.
 
 Inviting someone: the Contacts page is not for that; an invitation is a login link carrying your organisation's identifier. That feature comes with the full edition; in the free edition the office is the founder's.
@@ -116,7 +118,7 @@ The Builder never merges, never pays, never touches the office. Its security gat
 
 ## 9. Backups and restore
 
-Every night the office writes a compressed export of the database to the `core-sauvegardes` volume (fifteen kept). To get them off the machine:
+Every night the office writes a compressed export of the database to the `core-sauvegardes` volume (the last fourteen are kept, manual backups included; they are not encrypted, protect the volume like the database). To get them off the machine:
 
 ```bash
 docker compose cp core-app:/data/sauvegardes ./backups-$(date +%F)

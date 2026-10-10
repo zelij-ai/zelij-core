@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import io
+import math
 import os
 from datetime import date, datetime, timedelta, timezone
 
@@ -18,6 +19,7 @@ from core import db, passerelle
 CATEGORIES = ("abonnement", "hebergement", "domaine", "prestataire", "materiel", "autre")
 PERIODICITES = ("unique", "mensuelle", "annuelle")
 STRIPE_API = "https://api.stripe.com/v1/charges"
+MONTANT_MAX_EUR = 1_000_000_000      # garde-fou de saisie : ni infini, ni « pas un nombre », ni faute de frappe à douze zéros
 
 
 # ---------------------------------------------------------------- charges
@@ -31,8 +33,9 @@ def valider_charge(*, date_: str, libelle: str, montant_eur: str, categorie: str
         d = None
     try:
         montant = round(float(str(montant_eur).replace(",", ".").replace(" ", "")), 2)
-        if montant <= 0:
+        if not math.isfinite(montant) or montant <= 0 or montant > MONTANT_MAX_EUR:
             erreurs.append("montant positif attendu")
+            montant = 0.0
     except ValueError:
         erreurs.append("montant invalide")
         montant = 0.0
@@ -125,7 +128,7 @@ def importer_stripe(c: db.Connexion, org_id: str, *, par: str, depuis: date | No
                 if montant <= 0:
                     continue
                 libelle = ch.get("description") or ch.get("statement_descriptor") or "Paiement Stripe"
-                client_nom = ch.get("billing_details", {}).get("name") or ch.get("receipt_email") or ""
+                client_nom = (ch.get("billing_details") or {}).get("name") or ch.get("receipt_email") or ""
                 if ajouter_vente(c, org_id, source="stripe", reference=str(ch.get("id")), date_=jour, libelle=str(libelle), montant_eur=montant,
                                  client=str(client_nom), par=par):
                     importees += 1

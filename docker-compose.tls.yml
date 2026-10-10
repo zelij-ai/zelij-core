@@ -19,6 +19,10 @@ services:
 
   core-app:
     ports: !reset []
+    environment:
+      # Ici le port du bureau n'est plus publié : seul Caddy, sur le réseau interne du projet, peut lui parler. Ses en-têtes
+      # X-Forwarded-For et X-Forwarded-Proto sont donc crus. Sans ce fichier, ils ne le sont de personne (boucle locale seulement).
+      FORWARDED_ALLOW_IPS: "*"
 
 volumes:
   caddy-data:

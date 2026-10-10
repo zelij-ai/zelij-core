@@ -1,16 +1,19 @@
-"""Sauvegarde quotidienne de la base du bureau : `pg_dump` en PostgreSQL, copie du fichier en SQLite, compressée, datée,
-sous SAUVEGARDES_DIR (volume), quatorze jours gardés. Lancée par un fil d'arrière-plan en production, ou à la main."""
+"""Sauvegarde quotidienne de la base du bureau : `pg_dump` en PostgreSQL, copie cohérente en SQLite, compressée, datée,
+sous SAUVEGARDES_DIR (volume), les quatorze dernières gardées (sauvegardes manuelles comprises). Lancée par un fil d'arrière-plan
+en production, ou à la main. Les fichiers ne sont pas chiffrés : le volume se protège comme la base elle-même."""
 from __future__ import annotations
 
 import gzip
 import logging
 import os
-import shutil
+import sqlite3
 import subprocess
+import tempfile
 import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 from core import db
 
@@ -24,6 +27,16 @@ def dossier() -> Path:
     return p
 
 
+def _sans_mot_de_passe(u: str) -> tuple[str, str]:
+    """(adresse sans mot de passe, mot de passe) : le mot de passe passe par l'environnement du processus, jamais par sa ligne
+    de commande, que tout processus de la machine peut lire."""
+    p = urlsplit(u)
+    if not p.password:
+        return u, ""
+    hote = (p.username or "") + "@" + (p.hostname or "") + (f":{p.port}" if p.port else "")
+    return urlunsplit((p.scheme, hote, p.path, p.query, p.fragment)), p.password
+
+
 def sauvegarder(*, executer_cmd=None) -> dict:
     """Une sauvegarde maintenant. Retourne le fichier produit et sa taille, ou l'erreur."""
     u = db.url()
@@ -31,8 +44,10 @@ def sauvegarder(*, executer_cmd=None) -> dict:
     cible = dossier() / f"bureau-{horodatage}.sql.gz"
     try:
         if u.startswith("postgres"):
-            executer_cmd = executer_cmd or (lambda args: subprocess.run(args, capture_output=True, timeout=600, check=False))
-            r = executer_cmd(["pg_dump", "--no-owner", "--no-privileges", u])
+            adresse, mot_de_passe = _sans_mot_de_passe(u)
+            env = {**os.environ, "PGPASSWORD": mot_de_passe} if mot_de_passe else None
+            executer_cmd = executer_cmd or (lambda args: subprocess.run(args, capture_output=True, timeout=600, check=False, env=env))
+            r = executer_cmd(["pg_dump", "--no-owner", "--no-privileges", adresse])
             if getattr(r, "returncode", 1) != 0:
                 return {"ok": False, "detail": "pg_dump en échec : " + (getattr(r, "stderr", b"") or b"").decode("utf-8", errors="replace")[:200]}
             with gzip.open(cible, "wb") as f:
@@ -42,9 +57,19 @@ def sauvegarder(*, executer_cmd=None) -> dict:
             if not source.exists():
                 return {"ok": False, "detail": "base SQLite introuvable"}
             cible = dossier() / f"bureau-{horodatage}.sqlite.gz"
-            with open(source, "rb") as src, gzip.open(cible, "wb") as dst:
-                shutil.copyfileobj(src, dst)
-    except (OSError, subprocess.SubprocessError) as exc:
+            # Copie par l'interface de sauvegarde de SQLite : cohérente même si le bureau écrit pendant ce temps.
+            with tempfile.TemporaryDirectory() as tmp:
+                copie = Path(tmp) / "copie.sqlite"
+                src, dst = sqlite3.connect(str(source)), sqlite3.connect(str(copie))
+                try:
+                    src.backup(dst)
+                finally:
+                    src.close()
+                    dst.close()
+                with open(copie, "rb") as f, gzip.open(cible, "wb") as sortie:
+                    while bloc := f.read(1 << 20):
+                        sortie.write(bloc)
+    except (OSError, subprocess.SubprocessError, sqlite3.Error) as exc:
         return {"ok": False, "detail": f"sauvegarde impossible : {str(exc)[:160]}"}
     menage()
     return {"ok": True, "fichier": cible.name, "octets": cible.stat().st_size, "detail": f"{cible.name} ({cible.stat().st_size} octets)"}

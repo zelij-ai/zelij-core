@@ -104,7 +104,7 @@
     }
     ctx.restore();
     // étiquette en pastille sombre : code dans la couleur du couloir, prénom en blanc
-    var code = n.fondateur ? 'CEO' : (n.libre ? 'libre' : n.id), prenom = n.fondateur ? 'humain' : (n.libre ? n.nom : n.prenom);
+    var code = n.fondateur ? 'FONDATEUR' : (n.libre ? 'libre' : n.id), prenom = n.fondateur ? 'humain' : (n.libre ? n.nom : n.prenom);
     ctx.save(); ctx.font = '600 10px ui-monospace, Consolas, monospace'; var wc = ctx.measureText(code).width; ctx.font = '700 13px ui-sans-serif, system-ui'; var wp = ctx.measureText(prenom).width;
     var pw = wc + wp + 26, px = x - pw / 2, py = y + r + 8;
     ctx.fillStyle = 'rgba(8,10,12,.72)'; ctx.beginPath(); ctx.roundRect(px, py, pw, 22, 11); ctx.fill();
@@ -161,8 +161,8 @@
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     ctx.font = '700 16px ui-sans-serif, system-ui'; ctx.fillStyle = '#fff'; ctx.fillText(a.nom, cx + 58, cy + 24);
     ctx.font = '600 12px ui-monospace, Consolas, monospace'; ctx.fillStyle = c.teinte;
-    var cibleNom = c.cible ? (c.cible.fondateur ? 'CEO' : c.cible.prenom) : '';
-    ctx.fillText((a.fondateur ? 'CEO' : a.id) + (cibleNom ? '  →  ' + cibleNom : '') + '    ' + c.heure, cx + 58, cy + 42);
+    var cibleNom = c.cible ? (c.cible.fondateur ? 'FONDATEUR' : c.cible.prenom) : '';
+    ctx.fillText((a.fondateur ? 'FONDATEUR' : a.id) + (cibleNom ? '  →  ' + cibleNom : '') + '    ' + c.heure, cx + 58, cy + 42);
     ctx.font = '500 16px ui-sans-serif, system-ui'; ctx.fillStyle = 'rgba(255,255,255,.95)'; lignes.forEach(function (l, i) { ctx.fillText(l, cx + 18, cy + 76 + 24 * i); });
     ctx.restore(); return true;
   }
@@ -186,7 +186,7 @@
     Object.keys(noeuds).forEach(function (k) { noeud(noeuds[k], t); });
     var vivantes = []; cartes.forEach(function (c, i) { if (carte(c, t, i)) vivantes.push(c); }); cartes = vivantes;
     ctx.save(); ctx.font = '11px ui-sans-serif, system-ui'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
-    [['#8ea6f0', 'échange'], ['#37b385', 'exécution'], ['#e0a21c', 'décision · CEO']].forEach(function (lg, i) { var x = 16 + i * 120; ctx.strokeStyle = lg[0]; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, h - 16); ctx.lineTo(x + 22, h - 16); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText(lg[1], x + 28, h - 12); });
+    [['#8ea6f0', 'échange'], ['#37b385', 'exécution'], ['#e0a21c', 'décision · fondateur']].forEach(function (lg, i) { var x = 16 + i * 120; ctx.strokeStyle = lg[0]; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, h - 16); ctx.lineTo(x + 22, h - 16); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText(lg[1], x + 28, h - 12); });
     ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillText('chaque carte est une action réelle · by zelij.ai', w - 14, h - 12); ctx.restore();
     horloge();
   }

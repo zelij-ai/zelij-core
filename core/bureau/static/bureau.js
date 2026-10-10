@@ -6,6 +6,10 @@
     var f = ev.target;
     if (f && f.hasAttribute && f.hasAttribute('data-confirmer') && !window.confirm(f.getAttribute('data-confirmer'))) ev.preventDefault();
   });
+  // Jauge du budget : la largeur vient d'un attribut de données, posée ici (un style en ligne serait refusé par la politique de sécurité).
+  document.querySelectorAll('[data-part]').forEach(function (el) {
+    var part = Math.max(0, Math.min(100, parseFloat(el.getAttribute('data-part')) || 0)); el.style.setProperty('--part', part + '%');
+  });
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   // Compte à rebours doux des montants : du zéro à la valeur, 900 ms.
   document.querySelectorAll('[data-compte]').forEach(function (el) {

@@ -215,8 +215,10 @@ def test_deployer_site_refuse_hors_approbation_et_fonctionne_apres(monkeypatch):
 
         ex = Executeur(appel)
         ex.executer(c, oid, agents.charger()["batisseur"], tache="t", instruction="mets en ligne")
-        ex.executer(c, oid, agents.charger()["batisseur"], tache="decision-x", instruction="mets en ligne", contexte={"decision_id": "x"})
-        assert vus[0].startswith("refus") and json.loads(vus[1])["ok"] is True
+        # une décision approuvée d'une autre portée (corriger une page, proposer une demande de fusion) n'ouvre pas la mise en ligne
+        ex.executer(c, oid, agents.charger()["batisseur"], tache="decision-x", instruction="mets en ligne", contexte={"decision_id": "x", "portee": "demande-fondateur"})
+        ex.executer(c, oid, agents.charger()["batisseur"], tache="decision-y", instruction="mets en ligne", contexte={"decision_id": "y", "portee": "mise-en-ligne"})
+        assert vus[0].startswith("refus") and vus[1].startswith("refus") and json.loads(vus[2])["ok"] is True
 
 
 def _connecter(email):

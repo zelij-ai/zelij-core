@@ -57,11 +57,12 @@ def evenements(c: db.Connexion, org_id: str, fiches: dict, *, depuis: str, publi
     for d in c.lignes("SELECT demandeur, objectif, etat, consigne, decidee_par, cree_le, decidee_le FROM decisions WHERE org_id = ? AND (cree_le >= ? OR decidee_le >= ?) ORDER BY cree_le",
                       (org_id, depuis, depuis)):
         acteur = _agent_depuis_signature(d["demandeur"], fiches) or "chef-de-cabinet"
+        objet = "une décision" if public else d["objectif"]      # l'objet d'une décision est interne : jamais sur la page publique
         if d["cree_le"] >= depuis:
-            out.append({"t": d["cree_le"], "type": "decision", "acteur": acteur, "cible": "fondateur", "texte": f"propose : {d['objectif']}"})
+            out.append({"t": d["cree_le"], "type": "decision", "acteur": acteur, "cible": "fondateur", "texte": f"propose : {objet}"})
         if d["decidee_le"] and d["decidee_le"] >= depuis:
             libelle = {"approuvee": "approuve", "refusee": "refuse", "a_modifier": "demande des changements"}.get(d["etat"], d["etat"])
-            texte = f"{libelle} : {d['objectif']}" + (f" — {d['consigne']}" if d["consigne"] and not public else "")
+            texte = f"{libelle} : {objet}" + (f" — {d['consigne']}" if d["consigne"] and not public else "")
             out.append({"t": d["decidee_le"], "type": "decision_ceo", "acteur": "fondateur", "cible": acteur, "texte": texte})
     for j in c.lignes("SELECT acteur, action, cible, detail, cree_le FROM journal WHERE org_id = ? AND cree_le >= ? ORDER BY cree_le", (org_id, depuis)):
         if j["action"] == "demande":

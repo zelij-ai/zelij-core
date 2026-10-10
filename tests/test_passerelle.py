@@ -8,10 +8,13 @@ from core.schema import migrer
 def test_cout_depuis_usage_et_tarifs_dates():
     u = SimpleNamespace(input_tokens=1_000_000, output_tokens=100_000, cache_read_input_tokens=500_000)
     assert passerelle.cout_usd("claude-opus-5-5", u) == 4.0 + 2.0 + 0.10
-    assert passerelle.cout_usd("claude-haiku-5-5", {"input_tokens": 2_000_000, "output_tokens": 0}) == 0.20
+    assert passerelle.cout_usd("claude-haiku-5-5", {"input_tokens": 80_000, "output_tokens": 0}) == 0.008
+    # palier relevé le 10/10/2026 : au-delà de 100 000 tokens d'entrée, la requête passe à 0,50 $ / 2,50 $
+    assert passerelle.cout_usd("claude-haiku-5-5", {"input_tokens": 2_000_000, "output_tokens": 0}) == 1.0
+    assert passerelle.cout_usd("claude-sonnet-5-5", SimpleNamespace(input_tokens=0, output_tokens=0, cache_read_input_tokens=1_000_000)) == 0.10
     assert passerelle.cout_usd("modele-inconnu", {"input_tokens": 1_000_000}) == 4.0     # repli sur le tarif Opus, jamais zéro
     assert passerelle.cout_usd("claude-sonnet-5-5", None) == 0.0
-    assert passerelle.TARIFS_RELEVES_LE == "2026-10-06"
+    assert passerelle.TARIFS_RELEVES_LE == "2026-10-10"
 
 
 def test_plafond_mensuel(monkeypatch):

@@ -8,6 +8,7 @@ SSH_CLE_HOTE (facultatif : la clé publique du serveur telle que `ssh-keyscan` l
 absente, la clé est acceptée à la première connexion et mémorisée)."""
 from __future__ import annotations
 
+import hashlib
 import os
 import shlex
 import subprocess
@@ -43,10 +44,10 @@ def options_hote(conf: dict) -> list[str]:
         return ["-o", "StrictHostKeyChecking=accept-new"]
     hote = conf["hote"] if int(conf.get("port", 22)) == 22 else f"[{conf['hote']}]:{conf['port']}"
     ligne = cle_hote if cle_hote.split()[0] == hote else f"{hote} {cle_hote}"
-    f = tempfile.NamedTemporaryFile("w", prefix="known_hosts-", suffix=".txt", delete=False, encoding="utf-8")
-    f.write(ligne.strip() + "\n")
-    f.close()
-    return ["-o", "StrictHostKeyChecking=yes", "-o", f"UserKnownHostsFile={f.name}"]
+    # Un seul fichier par clé d'hôte, réécrit à l'identique : pas un fichier temporaire de plus à chaque commande.
+    chemin = Path(tempfile.gettempdir()) / f"known_hosts-{hashlib.sha256(ligne.encode()).hexdigest()[:16]}.txt"
+    chemin.write_text(ligne.strip() + "\n", encoding="utf-8")
+    return ["-o", "StrictHostKeyChecking=yes", "-o", f"UserKnownHostsFile={chemin}"]
 
 
 def _ssh(conf: dict, commande: str, *, executer_cmd=_executer_cmd, entree: bytes | None = None) -> tuple[int, str]:

@@ -13,12 +13,14 @@ from pathlib import Path
 
 RACINE = Path(__file__).resolve().parents[1]
 IGNORES = {".git", "data", "__pycache__", ".pytest_cache", "node_modules", ".venv"}
-EXTENSIONS = {".py", ".md", ".html", ".css", ".js", ".json", ".yml", ".yaml", ".txt", ".toml", ".env.example", ".cfg", ".ini", ".sh", "Dockerfile"}
+EXTENSIONS = {".py", ".md", ".html", ".css", ".js", ".json", ".yml", ".yaml", ".txt", ".toml", ".env.example", ".cfg", ".ini", ".sh", ".svg", "Dockerfile",
+              "Caddyfile", ".gitignore", ".dockerignore"}
 MOTIFS_GENERIQUES = [
     (re.compile(r"sk-ant-[A-Za-z0-9_-]{10,}"), "clé d'API Anthropic"),
     (re.compile(r"-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----"), "clé privée"),
     (re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"), "adresse IPv4"),
-    (re.compile(r"\bghp_[A-Za-z0-9]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b"), "jeton GitHub"),
+    # tous les préfixes de jetons GitHub : personnel (ghp_, github_pat_), OAuth (gho_), utilisateur (ghu_), installation (ghs_), rafraîchissement (ghr_)
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b"), "jeton GitHub"),
     (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "clé AWS"),
     (re.compile(r"\bA(0[0-9]|[1-7][0-9])\b"), "code d'agent de l'éditeur (A00–A79)"),
     (re.compile(r"\b[A-Za-z0-9._%+-]+@(gmail|outlook|hotmail|yahoo|proton)\.[a-z]{2,}\b", re.I), "adresse e-mail personnelle"),

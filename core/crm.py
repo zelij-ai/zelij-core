@@ -42,7 +42,7 @@ def creer_contact(c: db.Connexion, org_id: str, *, email: str, nom: str, entrepr
     c.executer("INSERT INTO contacts (id, org_id, email, nom, entreprise, role, base_legale, source, conservation_mois, opposition, cree_le, maj_le) "
                "VALUES (?,?,?,?,?,?,?,?,?,0,?,?)", (cid, org_id, e, (nom or "").strip()[:160], (entreprise or "").strip()[:160], role, base_legale,
                                                    (source or "").strip()[:200], mois, now, now))
-    journaliser(c, org_id, par, "contact.creation", cid, f"{e} · {role} · {base_legale}")
+    journaliser(c, org_id, par, "contact.creation", cid, f"{role} · {base_legale}")     # ni adresse ni nom dans le journal : la fiche les porte
     return cid
 
 
@@ -62,7 +62,7 @@ def ajouter_echange(c: db.Connexion, org_id: str, contact_id: str, *, sens: str,
     c.executer("INSERT INTO echanges (id, org_id, contact_id, date, sens, canal, resume, auteur, cree_le) VALUES (?,?,?,?,?,?,?,?,?)",
                (eid, org_id, contact_id, jour, sens, (canal or "")[:60], (resume or "").strip()[:2000], par, db.maintenant()))
     c.executer("UPDATE contacts SET maj_le = ? WHERE id = ?", (db.maintenant(), contact_id))
-    journaliser(c, org_id, par, f"echange.{sens}", contact_id, (resume or "")[:120])
+    journaliser(c, org_id, par, f"echange.{sens}", contact_id, (canal or "")[:60])      # le résumé reste sur la fiche, pas dans le journal
     return eid
 
 
@@ -81,7 +81,7 @@ def exercer_droit(c: db.Connexion, org_id: str, contact_id: str, *, type_: str, 
         c.executer("UPDATE contacts SET opposition = 1, maj_le = ? WHERE id = ?", (db.maintenant(), contact_id))
     if type_ == "effacement":
         oublier(c, org_id, contact_id, par=par, motif="demande d'effacement")
-    journaliser(c, org_id, par, f"droit.{type_}", contact_id, detail[:120])
+    journaliser(c, org_id, par, f"droit.{type_}", contact_id, "")       # le détail saisi vit dans le registre des droits, effacé à l'oubli
     return lire(c, org_id, contact_id) or {}
 
 
@@ -100,6 +100,10 @@ def oublier(c: db.Connexion, org_id: str, contact_id: str, *, par: str, motif: s
     c.executer("UPDATE contacts SET email = ?, nom = '', entreprise = '', source = '', oublie_le = ?, maj_le = ? WHERE id = ?",
                ("oublie:" + _empreinte(contact["email"]), db.maintenant(), db.maintenant(), contact_id))
     c.executer("UPDATE echanges SET resume = '', canal = '' WHERE contact_id = ? AND org_id = ?", (contact_id, org_id))
+    # Le journal et le registre des droits gardent la trace (qui, quoi, quand), plus le contenu : une adresse ou un nom écrits
+    # là par une version antérieure, ou dans le détail d'une demande, disparaissent avec la fiche.
+    c.executer("UPDATE journal SET detail = '' WHERE org_id = ? AND cible = ?", (org_id, contact_id))
+    c.executer("UPDATE droits SET detail = '' WHERE org_id = ? AND contact_id = ?", (org_id, contact_id))
     journaliser(c, org_id, par, "contact.oubli", contact_id, motif)
 
 

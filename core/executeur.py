@@ -7,6 +7,7 @@ import json
 import os
 import re
 from datetime import date
+from html.parser import HTMLParser
 from typing import Callable
 
 from core import db, passerelle
@@ -106,7 +107,8 @@ def _outil_batisseur(nom: str, entree: dict, ctx: dict) -> str:
                            "domaine": os.environ.get("SITE_DOMAINE", ""), "versions": module.versions() if module.configuration() else None,
                            "sauvegardes": sauvegarde.liste()[:5]}, ensure_ascii=False, default=str)
     if not ctx.get("apres_approbation"):
-        return "refus : la mise en ligne n'est possible qu'en exécution d'une décision approuvée par le fondateur"
+        return ("refus : la mise en ligne n'est possible qu'en exécution d'une décision de mise en ligne approuvée par le fondateur "
+                "(page Software factory, « Proposer une mise en ligne ») ; aucune autre décision ne l'autorise")
     module = cibles.charger()
     if module.configuration() is None:
         return "refus : cible de déploiement non configurée"
@@ -141,11 +143,40 @@ def _outil_contextuel(nom: str, entree: dict, ctx: dict | None) -> str | None:
     return json.dumps(crm.faits_pour_agent(ctx["c"], ctx["org_id"]), ensure_ascii=False)
 
 
+HTML_MAX = 600_000      # au-delà, la page est tronquée avant nettoyage : le texte rendu à l'agent est de toute façon plafonné
+_BALISES_MUETTES = ("script", "style", "noscript", "template")
+
+
+class _Texte(HTMLParser):
+    """Le texte visible d'une page, sans scripts ni styles. Un analyseur, pas une expression régulière : le temps reste
+    proportionnel à la taille, même sur une page écrite pour ralentir le serveur."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.morceaux: list[str] = []
+        self._muet = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in _BALISES_MUETTES:
+            self._muet += 1
+
+    def handle_endtag(self, tag):
+        if tag in _BALISES_MUETTES and self._muet:
+            self._muet -= 1
+
+    def handle_data(self, data):
+        if not self._muet:
+            self.morceaux.append(data)
+
+
 def _texte_de_page(html: str) -> str:
-    html = re.sub(r"<(script|style|noscript).*?</\1>", " ", html, flags=re.S | re.I)
-    texte = re.sub(r"<[^>]+>", " ", html)
-    texte = re.sub(r"&nbsp;", " ", texte)
-    return re.sub(r"\s+", " ", texte).strip()
+    analyseur = _Texte()
+    try:
+        analyseur.feed((html or "")[:HTML_MAX])
+        analyseur.close()
+    except Exception:  # noqa: BLE001 — une page illisible rend ce qui a pu être lu, jamais une panne
+        pass
+    return re.sub(r"\s+", " ", " ".join(analyseur.morceaux)).strip()
 
 
 def executer_outil(nom: str, entree: dict, ctx: dict | None = None) -> str:
@@ -226,6 +257,10 @@ class Executeur:
             if stop == "refusal":
                 return self._clore(c, eid, "refusee", {}, appels, reponse, tours, tokens=(tokens_in, tokens_out), cout=cout,
                                    detail="le modèle a décliné la demande")
+            if stop == "tool_use" and depense + cout * passerelle.taux_usd_eur() >= plafond:
+                # Le plafond se tient aussi en cours de route : pas de tour de plus une fois qu'il est atteint.
+                return self._clore(c, eid, "echec", {}, appels, reponse, tours, tokens=(tokens_in, tokens_out), cout=cout,
+                                   detail=f"plafond mensuel atteint pendant l'exécution ({plafond:.2f} €) : arrêt avant le tour suivant")
             blocs_outils = [b for b in reponse.content if getattr(b, "type", "") == "tool_use"]
             if stop != "tool_use" or not blocs_outils:
                 break
@@ -234,7 +269,8 @@ class Executeur:
             for b in blocs_outils:
                 entree = b.input if isinstance(b.input, dict) else {}
                 sortie = executer_outil(b.name, entree, {"c": c, "org_id": org_id, "acteur": fiche.signature,
-                                                        "apres_approbation": bool(contexte and contexte.get("decision_id"))})
+                                                        # la mise en ligne n'est ouverte que par une décision de mise en ligne approuvée
+                                                        "apres_approbation": bool(contexte and contexte.get("decision_id") and contexte.get("portee") == "mise-en-ligne")})
                 appels.append({"outil": b.name, "entree": entree, "resultat": sortie[:300]})
                 resultats.append({"type": "tool_result", "tool_use_id": b.id, "content": sortie})
             messages.append({"role": "user", "content": resultats})

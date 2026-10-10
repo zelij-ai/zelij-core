@@ -42,7 +42,7 @@ docker compose -f docker-compose.yml -f docker-compose.image.yml up -d
 En local sans Docker :
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 uvicorn core.bureau.app:app --reload
 ```
 

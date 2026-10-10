@@ -141,7 +141,9 @@ def decider(c: db.Connexion, org_id: str, decision_id: str, action: str, *, par:
         raise LookupError("décision introuvable")
     if d["etat"] != "en_attente":
         raise ValueError("décision déjà prise")
-    c.executer("UPDATE decisions SET etat = ?, consigne = ?, decidee_par = ?, decidee_le = ? WHERE id = ? AND org_id = ?",
-               (ACTIONS[action], consigne[:2000], par, db.maintenant(), decision_id, org_id))
+    # Condition tenue par la base : deux clics simultanés, une seule décision, donc une seule exécution.
+    if c.executer("UPDATE decisions SET etat = ?, consigne = ?, decidee_par = ?, decidee_le = ? WHERE id = ? AND org_id = ? AND etat = 'en_attente'",
+                  (ACTIONS[action], consigne[:2000], par, db.maintenant(), decision_id, org_id)) != 1:
+        raise ValueError("décision déjà prise")
     journaliser(c, org_id, par, f"decision.{ACTIONS[action]}", decision_id, consigne or d["objectif"])
     return lire(c, org_id, decision_id)

@@ -5,7 +5,7 @@
   <div><p class="sur-titre">Bureau · {{ mois }}</p><h1>{{ u.organisation }}</h1></div>
   <div class="compteur {% if plafond_atteint %}compteur--alerte{% endif %}" aria-label="Coût du mois">
     <strong><span data-compte="{{ '%.2f'|format(depense) }}" data-dec="2">{{ '%.2f'|format(depense) }}</span> €</strong>
-    <div class="compteur-barre" role="img" aria-label="{{ '%.0f'|format(100 * depense / plafond if plafond else 0) }} % du plafond"><i style="--part: {{ '%.0f'|format((100 * depense / plafond) if plafond else 0) }}%"></i></div>
+    <div class="compteur-barre" role="img" aria-label="{{ '%.0f'|format(100 * depense / plafond if plafond else 0) }} % du plafond"><i data-part="{{ '%.0f'|format((100 * depense / plafond) if plafond else 0) }}"></i></div>
     <span>sur {{ '%.0f'|format(plafond) }} € ce mois · tarifs relevés le {{ tarifs_le }}</span>
   </div>
 </div>

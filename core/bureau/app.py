@@ -35,14 +35,15 @@ async def _controle_csrf(request: Request) -> None:
     forgé depuis un autre site ne le connaît pas. Seconde barrière après le cookie SameSite=Strict et le contrôle d'origine."""
     if request.method != "POST" or request.url.path == "/connexion":
         return
-    uid = cx.lire_session(request.cookies.get(cx.COOKIE))
+    cookie = request.cookies.get(cx.COOKIE)
+    uid = cx.lire_session(cookie)
     if not uid:
         return                      # sans session, la route redirige vers la connexion
     jeton = request.headers.get("x-csrf-token")
     if not jeton:
         form = await request.form()
         jeton = str(form.get("_csrf") or "")
-    if not cx.csrf_valide(uid, jeton):
+    if not cx.csrf_valide(uid, jeton, cx.numero_session(cookie)):
         raise HTTPException(status_code=403, detail="jeton de formulaire absent ou invalide")
 
 
@@ -93,10 +94,14 @@ def _rediriger(url: str, message: str | None = None) -> RedirectResponse:
 
 
 def _utilisateur(request: Request, c: db.Connexion) -> dict | None:
-    uid = cx.lire_session(request.cookies.get(cx.COOKIE))
+    cookie = request.cookies.get(cx.COOKIE)
+    uid = cx.lire_session(cookie)
     if not uid:
         return None
-    return c.une("SELECT u.*, o.nom AS organisation FROM utilisateurs u JOIN organisations o ON o.id = u.org_id WHERE u.id = ?", (uid,))
+    u = c.une("SELECT u.*, o.nom AS organisation FROM utilisateurs u JOIN organisations o ON o.id = u.org_id WHERE u.id = ?", (uid,))
+    if u is None or int(u.get("session_n") or 0) != cx.numero_session(cookie):
+        return None                 # session révoquée par une déconnexion : le cookie, même copié, ne vaut plus rien
+    return u
 
 
 def _origine_sure(request: Request) -> bool:
@@ -119,7 +124,7 @@ def _garde(request: Request, c: db.Connexion) -> tuple[dict | None, Response | N
 def _page(request: Request, nom: str, **ctx) -> HTMLResponse:
     ctx.update(request=request, message=MESSAGES.get(request.query_params.get("m", ""), ""))
     if ctx.get("u"):
-        ctx["csrf"] = cx.jeton_csrf(ctx["u"]["id"])
+        ctx["csrf"] = cx.jeton_csrf(ctx["u"]["id"], int(ctx["u"].get("session_n") or 0))
     return templates.TemplateResponse(request, nom, ctx)
 
 
@@ -152,9 +157,12 @@ def connexion_envoyer(request: Request, email: str = Form("")):
     if not cx.demande_autorisee(e, ip=(request.client.host if request.client else "")):
         return _rediriger("/connexion", "trop")
     with db.connexion() as c:
-        brut = cx.creer_jeton(c, e)
-    sujet, corps = cx.email_connexion(f"{_origine()}/connexion/{brut}")
-    cx.envoyer_mail(e, sujet, corps)
+        # Une installation = une organisation : une adresse inconnue ne reçoit rien dès que le bureau a son fondateur.
+        # La réponse est la même dans les deux cas, pour ne rien apprendre à qui sonde le formulaire.
+        brut = cx.creer_jeton(c, e) if cx.inscription_possible(c, e) else None
+    if brut:
+        sujet, corps = cx.email_connexion(f"{_origine()}/connexion/{brut}")
+        cx.envoyer_mail(e, sujet, corps)
     return _rediriger("/connexion", "lien")
 
 
@@ -167,13 +175,19 @@ def connexion_jeton(jeton: str):
     if not u:
         return _rediriger("/connexion", "lien_invalide")
     r = _rediriger("/bureau")
-    r.set_cookie(cx.COOKIE, cx.signer_session(u["id"]), max_age=cx.DUREE_SESSION, httponly=True, samesite="strict",
+    r.set_cookie(cx.COOKIE, cx.signer_session(u["id"], n=int(u.get("session_n") or 0)), max_age=cx.DUREE_SESSION, httponly=True, samesite="strict",
                  secure=_origine().startswith("https"), path="/")
     return r
 
 
 @app.post("/deconnexion")
-def deconnexion():
+def deconnexion(request: Request):
+    """Efface le cookie et révoque la session côté serveur : une copie du cookie cesse de valoir sur tous les appareils."""
+    with db.connexion() as c:
+        u = _utilisateur(request, c)
+        if u:
+            cx.revoquer_sessions(c, u["id"])
+            gouvernance.journaliser(c, u["org_id"], u["email"], "deconnexion")
     r = _rediriger("/connexion", "deconnecte")
     r.delete_cookie(cx.COOKIE, path="/")
     return r
@@ -342,7 +356,7 @@ def _executer_apres_approbation(c: db.Connexion, u: dict, d: dict) -> None:
     instruction = INSTRUCTION_EXECUTION.format(jour=db.maintenant()[:10], objectif=d["objectif"], proposition=d["proposition"],
                                                plan=" → ".join(d.get("plan") or []) or "—", consigne=consigne, tache=d["tache"])
     res = app.state.executeur.executer(c, u["org_id"], fiche, tache=f"decision-{d['id'][:8]}", instruction=instruction,
-                                       contexte={"organisation": u["organisation"], "decision_id": d["id"]})
+                                       contexte={"organisation": u["organisation"], "decision_id": d["id"], "portee": d.get("portee") or ""})
     c.executer("UPDATE decisions SET execution_apres = ? WHERE id = ? AND org_id = ?", (res["execution_id"], d["id"], u["org_id"]))
     gouvernance.journaliser(c, u["org_id"], fiche.signature, "execution.apres_approbation", d["id"], f"{res['statut']} · {res['detail'] or 'plan en cours'}")
 

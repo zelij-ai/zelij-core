@@ -60,7 +60,8 @@ def rendre_corps(page: dict, jour: date | None = None) -> str:
     faq = [f for f in (page.get("faq") or []) if isinstance(f, dict) and f.get("q") and f.get("a")]
     if faq:
         parties.append("<section><h2>Questions fréquentes</h2>" + "".join(f"<h3>{_esc(f['q'])}</h3><p>{_esc(f['a'])}</p>" for f in faq) + "</section>")
-    sources = [s for s in (page.get("sources") or []) if isinstance(s, dict) and s.get("url")]
+    # Une source est une adresse https : tout autre protocole (javascript:, data:…) est écarté, il finirait en lien sur le site public.
+    sources = [s for s in (page.get("sources") or []) if isinstance(s, dict) and str(s.get("url") or "").strip().lower().startswith("https://")]
     if sources:
         items = "".join(f'<li><a href="{_esc(s["url"])}" rel="noopener">{_esc(s.get("title") or s.get("titre") or s["url"])}</a></li>' for s in sources)
         parties.append(f"<section><h2>Sources</h2><ul>{items}</ul></section>")

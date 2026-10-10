@@ -35,10 +35,13 @@ class Connexion:
     def _sql(self, sql: str) -> str:
         return sql.replace("?", "%s") if self.postgres else sql
 
-    def executer(self, sql: str, params: tuple = ()) -> None:
+    def executer(self, sql: str, params: tuple = ()) -> int:
+        """Exécute et rend le nombre de lignes touchées : sert aux mises à jour conditionnelles (« seulement si pas déjà fait »)."""
         cur = self._c.cursor()
         cur.execute(self._sql(sql), params)
+        n = cur.rowcount
         cur.close()
+        return n
 
     def lignes(self, sql: str, params: tuple = ()) -> list[dict]:
         cur = self._c.cursor()

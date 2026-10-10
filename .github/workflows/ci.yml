@@ -23,7 +23,7 @@ jobs:
       - name: Dépendances
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyflakes pip-audit bandit
+          pip install -r requirements-dev.txt pyflakes pip-audit bandit
       - name: Tests
         run: python -m pytest -q
       - name: Lint

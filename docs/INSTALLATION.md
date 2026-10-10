@@ -56,6 +56,8 @@ docker compose logs -f core-app
 
 Quand les journaux affichent `Uvicorn running on http://0.0.0.0:8000`, ouvrez http://localhost:8000. Vérification : http://localhost:8000/healthz répond `{"ok": true, "service": "zelij-core", "version": "…"}`.
 
+Le port 8000 n'est joignable que depuis la machine elle-même (`127.0.0.1`) : en http, ni le lien de connexion ni la session ne doivent circuler sur un réseau. Pour ouvrir le bureau à d'autres, passez par le chapitre 5 (https). Si vous savez ce que vous faites (réseau privé de confiance), `CORE_ECOUTE=0.0.0.0` dans `.env` publie le port sur toutes les interfaces.
+
 Sans SMTP, le lien de connexion est écrit dans les journaux du conteneur (jamais en production) : demandez un lien sur la page de connexion, puis copiez l'adresse `http://localhost:8000/connexion/…` depuis `docker compose logs core-app`.
 
 ### Sans construire l'image
@@ -84,12 +86,12 @@ docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d --build
 
 Vérification : https://bureau.votre-domaine.fr/healthz répond, le cadenas est présent, et http://bureau.votre-domaine.fr redirige vers https. Le port 8000 n'est plus publié sur la machine : seul Caddy parle au bureau.
 
-Si vous avez déjà un serveur TLS (Nginx, Traefik, un autre Caddy), gardez le `docker-compose.yml` seul et faites pointer votre serveur vers `127.0.0.1:8000` avec les en-têtes `X-Forwarded-For` et `X-Forwarded-Proto` ; le bureau les lit.
+Si vous avez déjà un serveur TLS (Nginx, Traefik, un autre Caddy), gardez le `docker-compose.yml` seul et faites pointer votre serveur vers `127.0.0.1:8000` avec les en-têtes `X-Forwarded-For` et `X-Forwarded-Proto`, et ajoutez `FORWARDED_ALLOW_IPS=*` dans `.env` : le bureau ne croit ces en-têtes que si vous le lui dites, et le port n'étant joignable que depuis la machine, seul votre serveur peut les poser.
 
 ## 6. Première connexion
 
 1. Ouvrez le bureau, saisissez votre adresse e-mail, demandez le lien.
-2. Cliquez sur le lien reçu (il vaut vingt minutes, une seule fois). **La première adresse qui se connecte crée l'organisation et devient le fondateur.**
+2. Cliquez sur le lien reçu (il vaut vingt minutes, une seule fois). **La première adresse qui se connecte crée l'organisation et devient le fondateur ; ensuite, plus aucune adresse inconnue ne reçoit de lien.** Une installation porte une seule organisation : vos clés (modèle, paiement, dépôt, serveur) ne servent qu'à elle. Si le bureau est joignable avant votre première connexion, posez `FONDATEUR_EMAIL=vous@votre-domaine.fr` dans `.env` : seule cette adresse pourra créer l'organisation.
 3. Vous arrivez sur le Bureau : le Chef de cabinet vous attend. Faites une demande simple pour vérifier que la clé Claude fonctionne : « Présente-moi l'équipe ». Le coût de l'appel s'affiche aussitôt dans le compteur du mois.
 
 Pour inviter quelqu'un : la page Contacts ne sert pas à cela ; une invitation est un lien de connexion qui porte l'identifiant de votre organisation. Cette fonction arrive avec l'édition complète ; dans l'édition gratuite, le bureau est celui du fondateur.
@@ -116,7 +118,7 @@ Le Bâtisseur ne fusionne jamais, ne paie jamais, ne touche jamais au bureau. Sa
 
 ## 9. Sauvegardes et restauration
 
-Chaque nuit, le bureau écrit un export compressé de la base dans le volume `core-sauvegardes` (quinze gardés). Pour les sortir de la machine :
+Chaque nuit, le bureau écrit un export compressé de la base dans le volume `core-sauvegardes` (les quatorze derniers sont gardés, sauvegardes manuelles comprises ; ils ne sont pas chiffrés, protégez le volume comme la base). Pour les sortir de la machine :
 
 ```bash
 docker compose cp core-app:/data/sauvegardes ./sauvegardes-$(date +%F)
