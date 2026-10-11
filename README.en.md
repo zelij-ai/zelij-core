@@ -6,6 +6,10 @@
 
 **Build your 100% AI-native startup.** One office where four agents work for you: they propose, you decide. Your machine, your Claude key, your data; nothing phones home.
 
+![The Zelij Core aquarium: the founder and four agents talk, propose decisions and carry out what is approved](docs/img/aquarium.gif)
+
+*The aquarium, on a simulated day (shown here in French). In your own installation, every card is a real action by your agents, live and replayable over twenty-four hours. Gold is you: nothing binding happens before your decision.*
+
 ## What the core does
 
 - **The office**: one page. Pending decisions, a request to the chief of staff, the latest runs with their cost, the journal, the agents, the installed modules.

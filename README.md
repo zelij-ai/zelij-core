@@ -6,6 +6,10 @@
 
 **Montez votre startup 100 % native IA.** Un bureau où quatre agents travaillent pour vous : ils proposent, vous décidez. Votre machine, votre clé Claude, vos données ; rien ne téléphone à personne.
 
+![L'aquarium de Zelij Core : le fondateur et quatre agents échangent, proposent des décisions et exécutent ce qui est approuvé](docs/img/aquarium.gif)
+
+*L'aquarium, sur une journée simulée. Dans votre installation, chaque carte est une action réelle de vos agents, en direct et rejouable sur vingt-quatre heures. L'or, c'est vous : rien de ce qui engage ne se fait avant votre décision.*
+
 ## Ce que fait le noyau
 
 - **Le bureau** : une page. Les décisions qui attendent, une demande au Chef de cabinet, les dernières exécutions avec leur coût, le journal, les agents, les modules installés.
