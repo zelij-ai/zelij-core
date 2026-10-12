@@ -863,17 +863,18 @@ def portrait_dossier(nom: str):
 
 @app.get("/agents/{agent_id}/portrait")
 def portrait(agent_id: str):
-    """Portrait facultatif d'un agent : agents/<id>/portrait.webp|png|jpg, puis portraits/<id>.* ; sinon 404 et le bassin dessine un monogramme."""
+    """Portrait d'un agent : d'abord VOTRE photo dans portraits/<id>.*, puis celle livrée avec la fiche (agents/<id>/portrait.*,
+    les quatre agents de l'édition arrivent avec un portrait de personnage fictif) ; sinon 404 et le bassin dessine un monogramme."""
     if not re.fullmatch(r"[a-z0-9-]{1,60}", agent_id or ""):
         return Response("introuvable", status_code=404)
+    trouve = _fichier_portrait(agent_id)
+    if trouve is not None:
+        return _reponse_portrait(*trouve)
     for ext, media in _FORMATS_PORTRAIT[:4]:
         chemin = agents.DOSSIER_AGENTS / agent_id / f"portrait.{ext}"
         if chemin.exists():
             return _reponse_portrait(chemin, media)
-    trouve = _fichier_portrait(agent_id)
-    if trouve is None:
-        return Response("introuvable", status_code=404)
-    return _reponse_portrait(*trouve)
+    return Response("introuvable", status_code=404)
 
 
 # ------------------------------------------------------------------ lot 5 : software factory

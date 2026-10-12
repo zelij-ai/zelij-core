@@ -44,8 +44,10 @@ def test_portraits_fondateur_et_agents(tmp_path, monkeypatch):
     r = client.get("/portraits/fondateur")
     assert r.status_code == 200 and r.headers["content-type"].startswith("image/svg+xml") and b"<svg" in r.content
     assert client.get("/portraits/inconnu").status_code == 404 and client.get("/portraits/..%2Ffondateur").status_code == 404
-    assert client.get("/agents/chef-de-cabinet/portrait").status_code == 404           # sans photo : monogramme dessiné par le bassin
-    # une photo déposée dans portraits/ prend le pas sur la silhouette, et sert aussi de repli pour un agent
+    # 12/10 : chaque agent de l'édition arrive avec le portrait d'un personnage fictif (agents/<id>/portrait.webp)
+    r = client.get("/agents/chef-de-cabinet/portrait")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/webp" and r.content[:4] == b"RIFF"
+    # une photo déposée dans portraits/ prend le pas sur la silhouette du fondateur ET sur le portrait livré d'un agent
     monkeypatch.setattr(bureau, "PORTRAITS", tmp_path)
     (tmp_path / "fondateur.svg").write_text("<svg xmlns='http://www.w3.org/2000/svg'/>", encoding="utf-8")
     (tmp_path / "fondateur.png").write_bytes(b"\x89PNG\r\n\x1a\nfaux")
@@ -53,8 +55,8 @@ def test_portraits_fondateur_et_agents(tmp_path, monkeypatch):
     r = client.get("/portraits/fondateur")
     assert r.status_code == 200 and r.headers["content-type"] == "image/png" and r.headers["cache-control"] == "public, max-age=300"
     r = client.get("/agents/chef-de-cabinet/portrait")
-    assert r.status_code == 200 and r.headers["content-type"] == "image/webp"
-    assert client.get("/agents/croissance/portrait").status_code == 404
+    assert r.status_code == 200 and r.headers["content-type"] == "image/webp" and r.content == b"RIFFfaux"
+    assert client.get("/agents/croissance/portrait").status_code == 200 and client.get("/agents/inconnu/portrait").status_code == 404
     # l'en-tête du bureau et l'aquarium vont chercher le portrait du fondateur
     assert 'src="/portraits/fondateur' in (RACINE / "core" / "bureau" / "templates" / "base.html").read_text(encoding="utf-8")
     assert "'/portraits/fondateur'" in (RACINE / "core" / "bureau" / "static" / "aquarium.js").read_text(encoding="utf-8")

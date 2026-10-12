@@ -78,7 +78,7 @@ Les pages rédigées par les agents : brouillon, proposée (demande de fusion ou
 
 ## Les portraits
 
-Déposez des images carrées (256 px, `webp`, `png` ou `jpg`) dans `portraits/` : `portraits/<identifiant>.webp` pour un agent, `portraits/fondateur.webp` pour vous. Elles apparaissent dans l'aquarium, sur la vitrine et dans l'en-tête du bureau. Sans photo, les agents ont un monogramme et le fondateur une silhouette. Voir `portraits/README.md`.
+Déposez des images carrées (256 px, `webp`, `png` ou `jpg`) dans `portraits/` : `portraits/<identifiant>.webp` pour un agent, `portraits/fondateur.webp` pour vous. Elles apparaissent dans l'aquarium, sur la vitrine et dans l'en-tête du bureau. Les quatre agents de l'édition arrivent avec le portrait d'un personnage fictif (`agents/<identifiant>/portrait.webp`) ; votre fichier dans `portraits/` passe devant. Sans aucune photo, un agent a un monogramme et le fondateur une silhouette. Voir `portraits/README.md`.
 
 ## Ce que Zelij Core ne fera jamais
 

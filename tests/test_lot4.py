@@ -193,7 +193,10 @@ def test_aquarium_vitrine_catalogue_et_module_signe(monkeypatch):
     c = _connecter("f@aqua-core.fr")
     page = c.get("/aquarium").text
     assert 'id="aquarium"' in page and 'id="aq-horloge"' in page and "Créer la page publique" in page and "Prospection" in page
-    assert c.get("/agents/croissance/portrait").status_code == 404 and c.get("/agents/../x/portrait").status_code in (404, 400)
+    # 12/10 : les quatre agents de l'édition arrivent avec un portrait fictif (agents/<id>/portrait.webp) ; un identifiant inconnu : 404.
+    rp = c.get("/agents/croissance/portrait")
+    assert rp.status_code == 200 and rp.headers["content-type"] == "image/webp" and rp.content[:4] == b"RIFF"
+    assert c.get("/agents/inconnu/portrait").status_code == 404 and c.get("/agents/../x/portrait").status_code in (404, 400)
     assert c.get("/api/aquarium").json()["postes_libres"][0]["id"] == "prospection"
     assert c.post("/vitrine/ouvrir").headers["location"].endswith("m=vitrine")
     page = c.get("/aquarium").text

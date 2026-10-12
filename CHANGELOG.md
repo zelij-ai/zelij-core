@@ -11,6 +11,8 @@ Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il 
 - La décision passe par la même porte que depuis le bureau, elle est journalisée avec son canal (« lien e-mail », « Telegram »), et ce
   qu'une approbation déclenche (agent, publication) est le même. Un bouton pressé depuis une autre conversation que la vôtre est refusé.
 - Rien ne sort en mode démonstration.
+- **Aquarium « nuit électrique »** : les quatre agents arrivent avec le portrait d'un personnage fictif (`agents/<id>/portrait.webp`,
+  votre fichier dans `portraits/` passe devant) ; nouvelle image du README.
 - À faire après mise à jour : rien pour l'e-mail si `SMTP_HOST` est renseigné (`DECISIONS_PAR_EMAIL=0` le coupe) ; pour Telegram,
   créer un robot auprès de @BotFather, lui écrire une fois, et poser les deux variables (guide dans `docs/MODE-D-EMPLOI.md`).
 

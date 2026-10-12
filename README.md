@@ -8,7 +8,7 @@
 
 ![L'aquarium de Zelij Core : le fondateur et quatre agents échangent, proposent des décisions et exécutent ce qui est approuvé](docs/img/aquarium.gif)
 
-*L'aquarium, sur une journée simulée. Dans votre installation, chaque carte est une action réelle de vos agents, en direct et rejouable sur vingt-quatre heures. L'or, c'est vous : rien de ce qui engage ne se fait avant votre décision.*
+*L'aquarium, sur une journée simulée. Dans votre installation, chaque carte est une action réelle de vos agents, en direct et rejouable sur vingt-quatre heures. L'or, c'est vous : rien de ce qui engage ne se fait avant votre décision. Les visages sont ceux de personnages fictifs.*
 
 ## Ce que fait le noyau
 

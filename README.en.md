@@ -8,7 +8,7 @@
 
 ![The Zelij Core aquarium: the founder and four agents talk, propose decisions and carry out what is approved](docs/img/aquarium.gif)
 
-*The aquarium, on a simulated day (shown here in French). In your own installation, every card is a real action by your agents, live and replayable over twenty-four hours. Gold is you: nothing binding happens before your decision.*
+*The aquarium, on a simulated day (shown here in French). In your own installation, every card is a real action by your agents, live and replayable over twenty-four hours. Gold is you: nothing binding happens before your decision. The faces are fictional characters.*
 
 ## What the core does
 
