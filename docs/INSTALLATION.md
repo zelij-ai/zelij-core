@@ -44,7 +44,7 @@ Ouvrez `.env` et renseignez, dans cet ordre :
    ```
 4. `SECRET_KEY` : la clé qui signe vos sessions, 48 caractères aléatoires au moins, générée de la même façon. Sans elle, le conteneur refuse de démarrer.
 5. `APP_ORIGIN` : l'adresse publique du bureau, par exemple `https://bureau.votre-domaine.fr`. En local, laissez `http://localhost:8000`. Elle sert aux liens de connexion et au contrôle d'origine des formulaires : si elle est fausse, les liens reçus par e-mail ne mènent nulle part.
-6. `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL` : l'envoi des liens de connexion. L'adresse d'expédition doit appartenir au domaine que votre SMTP a le droit d'utiliser.
+6. `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL` : l'envoi des liens de connexion, et des décisions à prendre (deux liens signés par décision ; `DECISIONS_PAR_EMAIL=0` pour les couper). Facultatif : `TELEGRAM_BOT_TOKEN` et `TELEGRAM_CHAT_ID` pour recevoir chaque décision avec trois boutons sur Telegram (guide dans `docs/MODE-D-EMPLOI.md`, section « Décider depuis le téléphone »). L'adresse d'expédition doit appartenir au domaine que votre SMTP a le droit d'utiliser.
 7. `ZELIJ_CLE_PUBLIQUE` : déjà renseignée. C'est la clé publique de l'éditeur des modules ; ne la changez que si vous installez des modules signés par quelqu'un d'autre.
 
 Le reste (`SITE_*`, `SSH_*`, `OVH_*`, `GITHUB_TOKEN`) concerne la Software factory et se remplit plus tard, au chapitre 8.

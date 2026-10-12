@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from core import VERSION, agents, db, demo, gouvernance, modules, passerelle
+from core import VERSION, agents, db, demo, gouvernance, modules, passerelle, poche
 from core.bureau import connexion as cx
 from core.executeur import Executeur
 from core.schema import migrer
@@ -33,8 +33,8 @@ def _origine() -> str:
 async def _controle_csrf(request: Request) -> None:
     """Tout POST d'un utilisateur connecté porte le jeton de sa session (champ `_csrf` ou en-tête X-CSRF-Token) : un formulaire
     forgé depuis un autre site ne le connaît pas. Seconde barrière après le cookie SameSite=Strict et le contrôle d'origine."""
-    if request.method != "POST" or request.url.path in ("/connexion", "/demo/entrer") or request.url.path.startswith("/connexion/"):
-        return                      # demander un lien, le confirmer ou entrer dans la démonstration se fait sans session
+    if request.method != "POST" or request.url.path in ("/connexion", "/demo/entrer") or request.url.path.startswith(("/connexion/", "/poche/")):
+        return                      # demander un lien, le confirmer, entrer dans la démonstration ou décider par lien signé : sans session
     cookie = request.cookies.get(cx.COOKIE)
     uid = cx.lire_session(cookie)
     if not uid:
@@ -396,7 +396,7 @@ def demande(request: Request, texte: str = Form(""), agent: str = Form("")):
                                         plan=["Proposition sur le site (demande de fusion ou brouillon)", "Relecture et fusion par le fondateur"],
                                         retour_arriere=["Fermer la demande ou supprimer le brouillon"], portee="publication", execution_id=res["execution_id"],
                                         agent_cible=fiche.id, tache=f"publier:{pid}", provenance=res.get("provenance") or {})
-            did = gouvernance.ouvrir(c, u["org_id"], paquet)
+            did = _ouvrir(c, u["org_id"], paquet)
             c.executer("UPDATE publications SET decision_id = ? WHERE id = ?", (did, pid))
             return _rediriger("/bureau", "demande")
         if res["statut"] == "terminee" and sortie.get("decision_requise"):
@@ -411,10 +411,35 @@ def demande(request: Request, texte: str = Form(""), agent: str = Form("")):
                 paquet.tache, paquet.agent_cible = "", ""
             manques = paquet.valider()
             if not manques:
-                gouvernance.ouvrir(c, u["org_id"], paquet)
+                _ouvrir(c, u["org_id"], paquet)
             else:
                 gouvernance.journaliser(c, u["org_id"], fiche.signature, "decision.incomplete", res["execution_id"], ", ".join(manques))
     return _rediriger("/bureau", "demande")
+
+
+@app.get("/poche/{jeton}", response_class=HTMLResponse)
+def poche_page(request: Request, jeton: str):
+    """Le lien reçu par e-mail ouvre une page de confirmation : rien n'est décidé par le GET (un logiciel qui suit les liens ne
+    décide rien). Le paquet est rappelé en entier ; le geste est le bouton."""
+    with db.connexion() as c:
+        v = poche.lire_lien(c, jeton)
+        if v is None:
+            return _page(request, "poche.html", etat="invalide")
+        return _page(request, "poche.html", etat="confirmer", d=v["decision"], action=v["jeton"]["action"], jeton=jeton,
+                     email=cx.masquer(v["jeton"]["email"]))
+
+
+@app.post("/poche/{jeton}", response_class=HTMLResponse)
+def poche_decider(request: Request, jeton: str):
+    """Le geste : le jeton est consommé, la décision tranchée par la gouvernance et journalisée « (lien e-mail) »."""
+    if not _origine_sure(request):
+        return Response("origine refusée", status_code=403)
+    with db.connexion() as c:
+        try:
+            d = poche.decider_par_lien(c, jeton, ip=request.client.host if request.client else "")
+        except ValueError as exc:
+            return _page(request, "poche.html", etat=str(exc) if str(exc) in ("trop", "reserve") else "invalide")
+        return _page(request, "poche.html", etat="fait", d=d)
 
 
 @app.post("/decisions/{decision_id}/{action}")
@@ -442,6 +467,17 @@ def decider(request: Request, decision_id: str, action: str, consigne: str = For
         pack = d["tache"].split(":", 1)[1].strip()
         return _rediriger("/catalogue" + (f"?pack={pack}" if _catalogue.est_pack(pack) else ""), "catalogue_module")
     return _rediriger("/bureau", d["etat"])
+
+
+def _ouvrir(c: db.Connexion, org_id: str, paquet) -> str:
+    """Ouvre la décision et prévient le fondateur là où il est (e-mail avec liens signés, Telegram) : « Dans la poche », 0.9.0.
+    Une notification qui échoue n'empêche jamais la décision d'exister : elle attend dans le bureau."""
+    did = gouvernance.ouvrir(c, org_id, paquet)
+    try:
+        poche.prevenir(c, org_id, did)
+    except Exception:  # noqa: BLE001
+        logger.exception("Dans la poche : notification impossible pour la décision %s", did)
+    return did
 
 
 def _executer_apres_approbation(c: db.Connexion, u: dict, d: dict) -> None:
@@ -916,13 +952,16 @@ def batir_deployer(request: Request):
                                     reversibilite="reversible", plan=["Archive de la branche principale", "Envoi et dépliage dans une nouvelle version", "Bascule", "Test de fumée", "Ménage des anciennes versions"],
                                     retour_arriere=["Retour automatique à la version précédente si la fumée échoue", "Bascule manuelle vers une version gardée"],
                                     portee="mise-en-ligne", agent_cible="batisseur", tache="Mets en ligne la branche principale avec l'outil deployer_site, puis relève le domaine avec sonder_domaine et rends compte.")
-        gouvernance.ouvrir(c, u["org_id"], paquet)
+        _ouvrir(c, u["org_id"], paquet)
     return _rediriger("/bureau", "mise_en_ligne")
 
 
 from core import sauvegarde as _sauvegarde  # noqa: E402
 
 _sauvegarde.demarrer_fil()
+# « Dans la poche » (0.9.0) : ce qui suit une approbation est le même, qu'elle vienne du bureau, d'un lien ou de Telegram.
+poche.configurer(apres_approbation=_executer_apres_approbation, envoyer_mail=cx.envoyer_mail)
+poche.demarrer_fil()
 
 if demo.actif():
     demo.demarrer(app)      # refuse de démarrer en production, sur PostgreSQL, ou sur une base qui porte une organisation réelle

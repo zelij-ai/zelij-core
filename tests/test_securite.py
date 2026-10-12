@@ -226,7 +226,7 @@ def test_f7_post_sans_jeton_refuse_meme_avec_cookie_et_origine():
     for t in (RACINE / "core" / "bureau" / "templates").glob("*.html"):
         src = t.read_text(encoding="utf-8")
         for balise in re.findall(r"<form\b[^>]*method=\"post\"[^>]*>", src):
-            if t.name == "connexion.html":
+            if t.name in ("connexion.html", "poche.html"):     # sans session : le secret est le jeton signé à usage unique de l'URL, plus l'origine
                 continue
             assert '<input type="hidden" name="_csrf"' in src[src.index(balise) + len(balise):][:80], (t.name, balise)
 

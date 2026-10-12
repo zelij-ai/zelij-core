@@ -13,6 +13,10 @@ SCHEMA = [
     """CREATE TABLE IF NOT EXISTS jetons_connexion (
         id TEXT PRIMARY KEY, email TEXT NOT NULL, empreinte TEXT NOT NULL UNIQUE, expire_le TEXT NOT NULL, utilise_le TEXT,
         org_id TEXT, cree_le TEXT NOT NULL)""",
+    # 0.9.0 « Dans la poche » : un jeton signé par action et par fondateur, à usage unique, pour décider depuis un e-mail.
+    """CREATE TABLE IF NOT EXISTS jetons_decision (
+        id TEXT PRIMARY KEY, org_id TEXT NOT NULL, decision_id TEXT NOT NULL, action TEXT NOT NULL, email TEXT NOT NULL,
+        empreinte TEXT NOT NULL UNIQUE, expire_le TEXT NOT NULL, utilise_le TEXT, cree_le TEXT NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS executions (
         id TEXT PRIMARY KEY, org_id TEXT NOT NULL, agent TEXT NOT NULL, tache TEXT NOT NULL, statut TEXT NOT NULL,
         entree TEXT NOT NULL DEFAULT '', sortie TEXT NOT NULL DEFAULT '', outils TEXT NOT NULL DEFAULT '[]', modele TEXT NOT NULL DEFAULT '',

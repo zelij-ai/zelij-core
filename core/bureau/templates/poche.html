@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titre %}Décision{% endblock %}
+{% block contenu %}
+<section class="connexion">
+  <p class="sur-titre">Dans la poche</p>
+  {% if etat == "confirmer" %}
+  <h1>{{ "Approuver" if action == "approuver" else "Refuser" }} : {{ d.objectif }}</h1>
+  <p class="intro">Demandée par {{ d.demandeur }}. Vous allez <strong>{{ "approuver" if action == "approuver" else "refuser" }}</strong> cette décision avec l'adresse {{ email }}. Le lien ne sert qu'une fois ; relisez, puis confirmez.</p>
+  <article class="message">
+    <p>{{ d.proposition }}</p>
+    {% if d.pourquoi_maintenant %}<p class="small muted">Pourquoi maintenant : {{ d.pourquoi_maintenant }}</p>{% endif %}
+    {% if d.options %}<p class="small">Options : {{ d.options | join(" · ") }}{% if d.recommandation %} — recommandation : <strong>{{ d.recommandation }}</strong>{% endif %}</p>{% endif %}
+    {% if d.risques %}<p class="small">Risques : {{ d.risques | join(" ; ") }}</p>{% endif %}
+    <p class="small muted">Réversibilité : {{ d.reversibilite }}{% if d.impact_eur %} · impact {{ "%.0f" | format(d.impact_eur) }} €{% endif %}</p>
+  </article>
+  <form method="post" action="/poche/{{ jeton }}" class="formulaire">
+    <button class="bouton" type="submit" autofocus>{{ "Oui, approuver" if action == "approuver" else "Oui, refuser" }}</button>
+  </form>
+  <p class="small muted">Vous préférez demander une modification avec une consigne ? <a href="/bureau">Ouvrez le bureau</a>. Ce n'est pas vous ? Fermez cette page : rien ne se passe sans votre geste.</p>
+  {% elif etat == "fait" %}
+  <h1>{{ ETATS[d.etat] }}</h1>
+  <p class="intro">« {{ d.objectif }} » : décision enregistrée et journalisée. {% if d.etat == "approuvee" and d.agent_cible and d.tache %}Ce que la décision désigne est lancé dans les limites du plan approuvé.{% endif %}</p>
+  <p><a class="bouton" href="/bureau">Ouvrir le bureau</a></p>
+  {% elif etat == "trop" %}
+  <h1>Trop de tentatives</h1>
+  <p class="intro">Réessayez dans un quart d'heure, ou décidez depuis le bureau.</p>
+  {% elif etat == "reserve" %}
+  <h1>Réservé au fondateur</h1>
+  <p class="intro">Seul le fondateur décide. L'accès refusé est journalisé.</p>
+  {% else %}
+  <h1>Ce lien ne vaut plus</h1>
+  <p class="intro">Il a déjà servi, il a expiré (sept jours), ou la décision a déjà été prise par un autre chemin. La décision, si elle attend encore, est dans le bureau.</p>
+  <p><a class="bouton" href="/bureau">Ouvrir le bureau</a></p>
+  {% endif %}
+</section>
+{% endblock %}

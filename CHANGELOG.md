@@ -2,6 +2,18 @@
 
 Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il y a quelque chose à faire. Les correctifs de sécurité sont marqués **sécurité**.
 
+## 0.9.0 — 2026-10-12
+
+- **Dans la poche : décider depuis le téléphone.** Quand un agent ouvre une décision, le fondateur la reçoit par e-mail avec le
+  paquet en clair et deux liens signés, « Approuver » et « Refuser » ; chaque lien ouvre une page de confirmation (un logiciel de
+  messagerie qui suit les liens ne décide rien), ne sert qu'une fois et vaut sept jours. Avec un robot Telegram (`TELEGRAM_BOT_TOKEN`,
+  `TELEGRAM_CHAT_ID`), la décision arrive avec trois boutons ; « Demander une modification » attend votre consigne en réponse.
+- La décision passe par la même porte que depuis le bureau, elle est journalisée avec son canal (« lien e-mail », « Telegram »), et ce
+  qu'une approbation déclenche (agent, publication) est le même. Un bouton pressé depuis une autre conversation que la vôtre est refusé.
+- Rien ne sort en mode démonstration.
+- À faire après mise à jour : rien pour l'e-mail si `SMTP_HOST` est renseigné (`DECISIONS_PAR_EMAIL=0` le coupe) ; pour Telegram,
+  créer un robot auprès de @BotFather, lui écrire une fois, et poser les deux variables (guide dans `docs/MODE-D-EMPLOI.md`).
+
 ## 0.8.1 — 2026-10-11
 
 - **Autres fournisseurs de modèles.** Claude reste le choix par défaut. `MODELE_FOURNISSEUR=openai` branche toute interface compatible avec celle d'OpenAI : OpenAI, un modèle local (Ollama, LM Studio), Mistral, OpenRouter. On nomme les modèles par classe (`MODELE_RAISONNEMENT`, `MODELE_EQUILIBRE`, `MODELE_RAPIDE`) et on déclare leurs tarifs (`MODELE_TARIFS`) ; un modèle local se déclare à zéro.

@@ -60,6 +60,14 @@ Les pages rédigées par les agents : brouillon, proposée (demande de fusion ou
 
 **Fondateur et membres.** Le fondateur décide, installe les modules, ouvre une mise en ligne et la page publique. Un membre rattaché à l'organisation lit et fait des demandes aux agents ; il ne décide pas.
 
+## Décider depuis le téléphone
+
+**Par e-mail.** Dès que l'envoi d'e-mails est configuré (`SMTP_HOST`), chaque décision ouverte par un agent vous arrive en entier : objectif, proposition, options, recommandation, risques, réversibilité. Deux liens, « Approuver » et « Refuser ». Un lien ouvre une page qui rappelle le paquet et vous demande de confirmer : rien n'est décidé tant que vous n'avez pas pressé le bouton. Le lien ne sert qu'une fois et vaut sept jours ; dès que la décision est prise, par n'importe quel chemin, les liens tombent. Pour demander une modification avec une consigne, passez par le bureau. `DECISIONS_PAR_EMAIL=0` coupe ces e-mails.
+
+**Par Telegram.** 1. Écrivez à @BotFather, `/newbot`, donnez-lui un nom : il vous rend un jeton. 2. Écrivez un premier message à votre robot. 3. Ouvrez `https://api.telegram.org/bot<jeton>/getUpdates` dans votre navigateur : le nombre après `"chat":{"id":` est l'identifiant de votre conversation. 4. Dans `.env` : `TELEGRAM_BOT_TOKEN=<jeton>` et `TELEGRAM_CHAT_ID=<identifiant>`, puis redémarrez. Chaque décision arrive alors avec trois boutons. « Demander une modification » vous fait écrire la consigne en réponse au message du robot ; elle est transmise à l'agent, comme depuis le bureau.
+
+**Ce qui ne change pas.** C'est vous qui décidez, et vous seul : un bouton pressé depuis une autre conversation que la vôtre est refusé et journalisé. La décision passe par la même porte que depuis le bureau et le journal dit d'où elle vient (« lien e-mail », « Telegram »). Ce qu'une approbation déclenche est le même. En mode démonstration, rien ne sort.
+
 ## Tenir le coût
 
 - Le **plafond mensuel** (`PLAFOND_MENSUEL_EUR`) bloque tout appel au-delà. Il se relève dans `.env`.
