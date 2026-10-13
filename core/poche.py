@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import secrets
 import threading
 import time
@@ -22,6 +23,10 @@ from datetime import datetime, timedelta, timezone
 from core import db, gouvernance
 
 logger = logging.getLogger("zelij-core")
+# Audit du 13/10 (P2) : httpx journalise chaque requête avec son adresse complète au niveau INFO, et l'adresse de l'API Telegram
+# contient le jeton du robot. Ces deux journaux restent au niveau WARNING, quel que soit le réglage de l'installation.
+for _nom in ("httpx", "httpcore"):
+    logging.getLogger(_nom).setLevel(logging.WARNING)
 
 VALIDITE = timedelta(days=7)            # un lien de décision vaut une semaine ; la décision, elle, attend dans le bureau
 ACTIONS_LIEN = ("approuver", "refuser")  # « à modifier » exige une consigne : il passe par le bureau ou par Telegram
@@ -115,22 +120,35 @@ def _trancher(c: db.Connexion, org_id: str, decision_id: str, action: str, *, em
 
 # ---------------------------------------------------------------- notification à l'ouverture
 
+_ADRESSE = re.compile(r"(?i)\b(?:https?://|www\.)(\S+)")
+
+
+def sans_liens(texte) -> str:
+    """Audit du 13/10 (P1) : le texte d'une décision est écrit par un agent, qui a pu être retourné par une page piégée. Une
+    adresse qu'il y glisse (« approuvez ici ») arriverait sur le téléphone du fondateur à côté des vrais liens signés. Toute
+    adresse est donc rendue illisible pour un logiciel (plus de schéma, points espacés) tout en restant lisible pour un humain."""
+    return _ADRESSE.sub(lambda m: "[lien retiré] " + m.group(1).replace(".", " · "), str(texte or ""))
+
+
 def texte_decision(d: dict, liens: dict[str, str] | None = None) -> str:
-    """Le paquet, en clair, tel qu'il arrive sur un téléphone. Pas de HTML : lisible partout."""
-    lignes = [f"Décision à prendre — {d['objectif']}", "", f"Demandée par : {d['demandeur']}", "", d["proposition"][:1200]]
+    """Le paquet, en clair, tel qu'il arrive sur un téléphone. Pas de HTML : lisible partout. Les seules adresses du message sont
+    les liens signés du bureau ; ce que l'agent a écrit est présenté comme tel, sans adresse cliquable."""
+    lignes = [f"Décision à prendre — {sans_liens(d['objectif'])}", "", f"Demandée par : {sans_liens(d['demandeur'])}", "",
+              "Proposition (texte écrit par l'agent, adresses retirées) :", sans_liens(d["proposition"][:1200])]
     if d.get("pourquoi_maintenant"):
-        lignes += ["", f"Pourquoi maintenant : {d['pourquoi_maintenant'][:400]}"]
+        lignes += ["", f"Pourquoi maintenant : {sans_liens(d['pourquoi_maintenant'][:400])}"]
     if d.get("options"):
-        lignes += ["", "Options : " + " · ".join(d["options"][:4])]
+        lignes += ["", "Options : " + " · ".join(sans_liens(o) for o in d["options"][:4])]
     if d.get("recommandation"):
-        lignes.append(f"Recommandation : {d['recommandation']}")
+        lignes.append(f"Recommandation : {sans_liens(d['recommandation'])}")
     if d.get("risques"):
-        lignes += ["", "Risques : " + " ; ".join(d["risques"][:4])]
+        lignes += ["", "Risques : " + " ; ".join(sans_liens(r) for r in d["risques"][:4])]
     lignes.append(f"Réversibilité : {d.get('reversibilite', 'reversible')}" + (f" · impact {d['impact_eur']:.0f} €" if d.get("impact_eur") else ""))
     if liens:
         lignes += ["", f"Approuver : {liens['approuver']}", f"Refuser : {liens['refuser']}",
                    f"Demander une modification (avec votre consigne) : {_origine()}/bureau",
-                   "", "Chaque lien ouvre une page de confirmation et ne sert qu'une fois ; il vaut sept jours. Ce n'est pas vous qui avez demandé ? Ignorez ce message : rien ne se passe sans votre geste."]
+                   "", "Seuls ces liens engagent : chacun ouvre une page de confirmation et ne sert qu'une fois ; il vaut sept jours. "
+                       "Ce n'est pas vous qui avez demandé ? Ignorez ce message : rien ne se passe sans votre geste."]
     return "\n".join(lignes)
 
 

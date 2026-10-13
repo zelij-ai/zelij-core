@@ -11,6 +11,10 @@ Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il 
 - La décision passe par la même porte que depuis le bureau, elle est journalisée avec son canal (« lien e-mail », « Telegram »), et ce
   qu'une approbation déclenche (agent, publication) est le même. Un bouton pressé depuis une autre conversation que la vôtre est refusé.
 - Rien ne sort en mode démonstration.
+- **Audit SecOps et injection du 13/10** (avant campagne) : les adresses écrites par un agent dans une décision ne sont plus
+  cliquables dans l'e-mail ni sur Telegram (hameçonnage) ; le jeton du robot ne peut plus apparaître dans les journaux, quel que
+  soit le niveau de journalisation ; une valeur lue dans un fichier sensible du dépôt (.env, clé, secret) ne peut plus ressortir
+  dans une proposition de fichiers du Bâtisseur. Banc interne : 53 scénarios tenus.
 - **Aquarium « nuit électrique »** : les quatre agents arrivent avec le portrait d'un personnage fictif (`agents/<id>/portrait.webp`,
   votre fichier dans `portraits/` passe devant) ; nouvelle image du README.
 - À faire après mise à jour : rien pour l'e-mail si `SMTP_HOST` est renseigné (`DECISIONS_PAR_EMAIL=0` le coupe) ; pour Telegram,

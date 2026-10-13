@@ -115,15 +115,41 @@ def sortie_permise(adresse: str, ctx: dict | None) -> bool:
     return bool(site) and bool(hote) and hote.removeprefix("www.") == site.removeprefix("www.")
 
 
+_FICHIERS_SENSIBLES = re.compile(r"(^|/)(\.env[^/]*|[^/]*\.(pem|key|p12|pfx|jks)|id_(rsa|ed25519|ecdsa)[^/]*|[^/]*(secret|credential|password)[^/]*)$", re.I)
+REFUS_SECRET = ("refus : la proposition contient une valeur lue dans un fichier sensible du dépôt (.env, clé, secret) pendant cette exécution ; "
+                "une valeur de configuration ne se recopie jamais dans un fichier, même privé")
+
+
+def valeurs_sensibles(chemin: str, contenu: str) -> set[str]:
+    """Audit du 13/10 (P7) : les valeurs d'un fichier sensible lu par le Bâtisseur (.env, clés, secrets), pour qu'aucune ne
+    ressorte dans une proposition de fichiers. Lignes NOM=VALEUR ou NOM: VALEUR, valeurs de 8 caractères au moins."""
+    if not _FICHIERS_SENSIBLES.search(chemin or ""):
+        return set()
+    out: set[str] = set()
+    for ligne in (contenu or "").splitlines():
+        m = re.match(r"\s*(?:export\s+)?[A-Za-z_][A-Za-z0-9_.-]*\s*[:=]\s*(.+?)\s*$", ligne)
+        if m:
+            v = m.group(1).strip().strip("'\"")
+            if len(v) >= 8 and not v.lower() in ("true", "false", "production", "development"):
+                out.add(v)
+    return out
+
+
 def _outil_batisseur(nom: str, entree: dict, ctx: dict) -> str:
     from core import cibles, depot, sauvegarde
     from core.cibles import sonde
 
     if nom == "depot_lire":
-        return encadrer(json.dumps(depot.lire(str(entree.get("chemin") or "")), ensure_ascii=False)[:20000])
+        lu = depot.lire(str(entree.get("chemin") or ""))
+        if isinstance(ctx.get("valeurs_sensibles"), set) and isinstance(lu, dict) and lu.get("ok"):
+            ctx["valeurs_sensibles"] |= valeurs_sensibles(str(lu.get("chemin") or entree.get("chemin") or ""), str(lu.get("contenu") or ""))
+        return encadrer(json.dumps(lu, ensure_ascii=False)[:20000])
     if nom == "depot_proposer":
-        fichiers = entree.get("fichiers") if isinstance(entree.get("fichiers"), dict) else {}
-        return json.dumps(depot.proposer({str(k): str(v) for k, v in fichiers.items()}, titre=str(entree.get("titre") or "Proposition du Bâtisseur"),
+        fichiers = {str(k): str(v) for k, v in (entree.get("fichiers") if isinstance(entree.get("fichiers"), dict) else {}).items()}
+        sensibles = ctx.get("valeurs_sensibles") or set()
+        if any(v in contenu for v in sensibles for contenu in fichiers.values()):
+            return REFUS_SECRET
+        return json.dumps(depot.proposer(fichiers, titre=str(entree.get("titre") or "Proposition du Bâtisseur"),
                                          description=str(entree.get("description") or ""), par=str(ctx.get("acteur") or "le Bâtisseur")), ensure_ascii=False)
     if nom == "sonder_domaine":
         domaine = str(entree.get("domaine") or "").strip() or os.environ.get("SITE_DOMAINE", "")
@@ -276,6 +302,7 @@ class Executeur:
         tours = 0
         reponse = None
         prive_lu = False        # vrai dès qu'un outil a lu le dépôt, les finances ou les contacts (voir OUTILS_LECTURE_PRIVEE)
+        sensibles: set[str] = set()   # valeurs lues dans un fichier sensible du dépôt pendant cette exécution (voir valeurs_sensibles)
         while tours < fiche.budget_tours:
             tours += 1
             try:
@@ -308,7 +335,7 @@ class Executeur:
                     appels.append({"outil": str(b.name)[:40], "entree": entree, "resultat": sortie[:300]})
                     resultats.append({"type": "tool_result", "tool_use_id": b.id, "content": sortie})
                     continue
-                sortie = executer_outil(b.name, entree, {"c": c, "org_id": org_id, "acteur": fiche.signature, "prive_lu": prive_lu,
+                sortie = executer_outil(b.name, entree, {"c": c, "org_id": org_id, "acteur": fiche.signature, "prive_lu": prive_lu, "valeurs_sensibles": sensibles,
                                                         # la mise en ligne n'est ouverte que par une décision de mise en ligne approuvée
                                                         "apres_approbation": bool(contexte and contexte.get("decision_id") and contexte.get("portee") == "mise-en-ligne")})
                 if b.name in OUTILS_LECTURE_PRIVEE:
