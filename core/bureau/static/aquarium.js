@@ -12,8 +12,9 @@
   var ENCRE = '#0e0b08', OR = '#e0a21c';
 
   // ---------- disposition
+  var tv = document.body.classList.contains('tv'), decalTv = tv ? 70 : 0;   // mode salle d'attente : la grande horloge prend le haut, la scène descend
   function taille() {
-    var w = canvas.clientWidth, h = Math.max(480, Math.min(720, Math.round(w * 0.56)));
+    var w = canvas.clientWidth, h = tv ? Math.max(360, window.innerHeight - (document.querySelector('.mesures') ? document.querySelector('.mesures').offsetHeight : 90)) : Math.max(480, Math.min(720, Math.round(w * 0.56)));
     canvas.width = w * dpr; canvas.height = h * dpr; canvas.style.height = h + 'px'; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     disposer();
   }
@@ -26,7 +27,7 @@
     etat.postes_libres.forEach(function (p) { (parCouloir.libres = parCouloir.libres || []).push({ id: p.id, nom: p.nom, prenom: '?', fonction: p.resume, couloir: 'libres', couleur: '#8a8378', libre: true }); });
     var anciens = noeuds; noeuds = {};
     couloirs.forEach(function (k) {
-      var liste = parCouloir[k.id] || [], top = 200, bas = h - 90, pas = liste.length > 1 ? (bas - top) / (liste.length - 1) : 0;
+      var liste = parCouloir[k.id] || [], top = 200 + decalTv, bas = h - 90, pas = liste.length > 1 ? (bas - top) / (liste.length - 1) : 0;
       liste.forEach(function (a, i) {
         var ancien = anciens[a.id];
         noeuds[a.id] = { id: a.id, nom: a.nom, prenom: a.prenom, fonction: a.fonction, couleur: a.couleur, libre: !!a.libre, actif: !!a.actif, en_cours: !!a.en_cours,
@@ -35,7 +36,7 @@
       });
     });
     var f = etat.fondateur;
-    noeuds.fondateur = { id: 'fondateur', nom: f.nom, prenom: f.nom, fonction: f.fonction, couleur: f.couleur, fondateur: true, x0: w / 2, y0: 140, x: w / 2, y: 140, phase: 0, r: 30, actif: true };
+    noeuds.fondateur = { id: 'fondateur', nom: f.nom, prenom: f.nom, fonction: f.fonction, couleur: f.couleur, fondateur: true, x0: w / 2, y0: 140 + decalTv, x: w / 2, y: 140 + decalTv, phase: 0, r: 30, actif: true };
   }
   function charger() {
     fetch(source, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) {
@@ -84,7 +85,7 @@
   function entetes(h) {
     couloirs.forEach(function (k) {
       ctx.save(); ctx.font = '600 11px ui-monospace, Consolas, monospace'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.letterSpacing = '0.22em';
-      ctx.fillText(k.nom, k.cx, 96); ctx.strokeStyle = k.couleur; ctx.globalAlpha = 0.8; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(k.cx - 16, 104); ctx.lineTo(k.cx + 16, 104); ctx.stroke();
+      ctx.fillText(k.nom, k.cx, 96 + decalTv); ctx.strokeStyle = k.couleur; ctx.globalAlpha = 0.8; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(k.cx - 16, 104 + decalTv); ctx.lineTo(k.cx + 16, 104 + decalTv); ctx.stroke();
       ctx.globalAlpha = 0.06; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(k.x1, 84); ctx.lineTo(k.x1, h - 30); ctx.stroke(); ctx.restore();
     });
   }
@@ -206,5 +207,16 @@
   });
   window.addEventListener('resize', taille);
   taille(); charger(); setInterval(function () { if (mode === 'direct') charger(); }, 60000);
+  if (tv) {
+    // Mode salle d'attente (0.9.2) : plein écran au premier clic, curseur et bandeau effacés après quatre secondes sans mouvement,
+    // page rechargée toutes les six heures pour suivre les mises à jour. Toujours en direct.
+    var repos = null;
+    function reveiller() { document.body.classList.remove('tv--repos'); clearTimeout(repos); repos = setTimeout(function () { document.body.classList.add('tv--repos'); }, 4000); }
+    document.addEventListener('mousemove', reveiller); document.addEventListener('keydown', reveiller); reveiller();
+    var pe = document.querySelector('[data-tv-plein-ecran]');
+    if (pe) pe.addEventListener('click', function () { var el = document.documentElement; if (el.requestFullscreen) el.requestFullscreen().catch(function () {}); });
+    window.addEventListener('resize', taille);
+    setTimeout(function () { window.location.reload(); }, 6 * 3600 * 1000);
+  }
   if (!reduit) requestAnimationFrame(boucle); else setTimeout(function () { dessiner(0); }, 400);
 })();

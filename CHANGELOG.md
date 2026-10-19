@@ -2,6 +2,13 @@
 
 Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il y a quelque chose à faire. Les correctifs de sécurité sont marqués **sécurité**.
 
+## 0.9.2 — 2026-10-19
+
+- **Mode salle d'attente.** La page publique de l'aquarium s'ouvre en plein écran sur une télé (`/vitrine/<jeton>?tv=1`, bouton
+  « Salle d'attente (TV) » sur la page Aquarium) : la scène, la grande horloge et les quatre chiffres du jour, rien à cliquer. Plein
+  écran au premier clic, curseur effacé au repos, rechargement toutes les six heures. Même règle que la page publique : titres et
+  comptes seulement, aucun détail interne.
+
 ## 0.9.1 — 2026-10-19
 
 - **Une étoile pour Zelij Core.** Un encart discret en bas du bureau invite à suivre le dépôt public sur GitHub, avec le nombre

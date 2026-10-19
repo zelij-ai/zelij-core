@@ -6,6 +6,7 @@
   <div class="actions">
     {% if jeton %}
     <a class="bouton bouton--second" href="/vitrine/{{ jeton }}" target="_blank" rel="noopener">Ouvrir la page publique</a>
+    <a class="bouton bouton--second" href="/vitrine/{{ jeton }}?tv=1" target="_blank" rel="noopener" title="La page publique en plein écran, pour une télé dans l'entrée">Salle d'attente (TV)</a>
     <form method="post" action="/vitrine/fermer" data-confirmer="Couper le lien public ? L'ancien lien ne fonctionnera plus."><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--second" type="submit">Couper le lien</button></form>
     {% else %}
     <form method="post" action="/vitrine/ouvrir"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="bouton bouton--laiton" type="submit">Créer la page publique</button></form>

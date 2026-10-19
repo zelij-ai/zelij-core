@@ -760,8 +760,9 @@ def vitrine_fermer(request: Request):
 
 
 @app.get("/vitrine/{jeton}", response_class=HTMLResponse)
-def vitrine(request: Request, jeton: str):
-    """Page publique : pas de connexion, rien d'interne, le badge de l'éditeur."""
+def vitrine(request: Request, jeton: str, tv: int = 0):
+    """Page publique : pas de connexion, rien d'interne, le badge de l'éditeur. `?tv=1` : mode salle d'attente (0.9.2),
+    la même page en plein écran pour une télé dans l'entrée : scène, horloge, chiffres du jour, rien d'autre."""
     from core import aquarium
 
     with db.connexion() as c:
@@ -770,7 +771,7 @@ def vitrine(request: Request, jeton: str):
             return Response("page introuvable", status_code=404)
         etat = aquarium.etat(c, org["id"], agents.charger(), public=True)
     return templates.TemplateResponse(request, "vitrine.html", {"request": request, "organisation": org["nom"], "etat": etat, "jeton": jeton,
-                                                                "demo": demo.actif(), "demo_bandeau": demo.BANDEAU})
+                                                                "demo": demo.actif(), "demo_bandeau": demo.BANDEAU, "tv": bool(tv)})
 
 
 @app.get("/api/vitrine/{jeton}")

@@ -37,7 +37,7 @@ Un suivi de contacts léger, conforme au RGPD : chaque fiche a une base légale,
 ### Aquarium
 « Regardez vos agents travailler » : chaque bulle est une action réelle des dernières vingt-quatre heures (une demande, un outil appelé, une décision proposée ou prise). Les couloirs correspondent aux fonctions ; les anneaux en pointillé sont des postes libres (ce que feraient les agents de l'édition complète). La ligne de temps rejoue la journée à la vitesse choisie ; « Direct » revient au présent. Survolez un agent pour son détail.
 
-« Créer la page publique » ouvre une **vitrine** à partager : la même scène, sans rien d'interne (ni e-mails, ni montants, ni textes de décision), avec le nom de votre organisation et les prénoms des agents. « Couper le lien » la ferme ; l'ancien lien cesse de fonctionner.
+« Créer la page publique » ouvre une **vitrine** à partager : la même scène, sans rien d'interne (ni e-mails, ni montants, ni textes de décision), avec le nom de votre organisation et les prénoms des agents. « Couper le lien » la ferme ; l'ancien lien cesse de fonctionner. « Salle d'attente (TV) » ouvre la même page en plein écran pour une télé dans l'entrée : la scène, l'horloge, les chiffres du jour.
 
 ### Catalogue
 Les modules qui s'ajoutent au bureau (déploiement cloud, agents supplémentaires, édition hébergée). Le bouton renvoie vers zelij.ai avec l'identifiant de votre installation. Un module reçu s'installe ici en déposant son `pack.json` signé ; le bureau vérifie la signature de l'éditeur, l'interface, et l'empreinte de chaque fichier.

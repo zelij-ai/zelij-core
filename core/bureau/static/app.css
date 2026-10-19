@@ -255,3 +255,24 @@ code { font-family: var(--mono); font-size: .9em; background: var(--papier-2); p
 .etoile-compte { margin-left: 2px; padding: 2px 8px; border-left: 1px solid var(--line-forte); color: var(--laiton); font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
 @media (max-width: 640px) { .etoile { right: 12px; left: 12px; bottom: 12px; width: auto; } }
 @media (prefers-reduced-motion: reduce) { .etoile.etoile--visible { animation: none; } }
+
+/* ---- mode salle d'attente (0.9.2) : la page publique sur une télé. Nuit assumée (c'est une scène), gros chiffres, rien à cliquer. */
+body.tv { background: #0e0b08; color: #f3efe6; cursor: default; }
+body.tv.tv--repos, body.tv.tv--repos * { cursor: none !important; }
+body.tv .entete, body.tv .sur-titre, body.tv h1, body.tv .intro, body.tv .scene-commandes, body.tv .note, body.tv .pied, body.tv .bandeau-demo { display: none; }
+body.tv .cadre { width: 100%; max-width: none; margin: 0; padding: 0; display: grid; grid-template-rows: 1fr auto; min-height: 100vh; }
+body.tv .scene { margin: 0; border-radius: 0; border: 0; box-shadow: none; }
+body.tv .scene canvas { cursor: default; }
+body.tv .scene-horloge strong { font-size: clamp(40px, 7vw, 92px); }
+body.tv .mesures { margin: 0; gap: 0; background: #14100b; border-top: 1px solid rgba(255,255,255,.08); }
+body.tv .mesures article { background: transparent; border: 0; border-right: 1px solid rgba(255,255,255,.08); border-radius: 0; box-shadow: none; padding: 16px 22px 14px; animation: none; }
+body.tv .mesures article:last-child { border-right: 0; }
+body.tv .mesures strong { color: #f1d48a; font-size: clamp(28px, 3.4vw, 44px); }
+body.tv .mesures span { color: #a39c90; font-size: 13px; }
+.tv-barre { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: center; gap: 14px; padding: 8px 16px; background: linear-gradient(rgba(14,11,8,.9), rgba(14,11,8,0)); color: #f3efe6; transition: opacity .4s ease; }
+.tv-barre .tv-marque { font: 600 15px/1 var(--display); }
+.tv-barre .tv-signature { color: #a39c90; font-size: 12px; }
+.tv-barre button, .tv-barre .lien { margin-left: auto; }
+.tv-barre .lien { margin-left: 0; color: #a39c90; font-size: 12px; }
+body.tv--repos .tv-barre { opacity: 0; pointer-events: none; }
+@media (max-width: 760px) { body.tv .mesures { grid-template-columns: repeat(2, minmax(0, 1fr)); } body.tv .mesures article:nth-child(2) { border-right: 0; } }

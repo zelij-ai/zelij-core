@@ -8,12 +8,13 @@
 <meta name="description" content="{{ organisation }} travaille avec des agents d'IA qui proposent et un fondateur qui décide. Chaque bulle est une action réelle.">
 <link rel="stylesheet" href="/static/app.css?v={{ VERSION }}">
 </head>
-<body>
+<body{% if tv %} class="tv"{% endif %}>
 {% if demo %}<p class="bandeau-demo" role="status"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span><strong>Démonstration.</strong> {{ demo_bandeau }}</span></p>{% endif %}
 <header class="entete">
   <span class="marque"><span class="marque-carreau" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 6.4L21 12l-6.4 3.6L12 22l-2.6-6.4L3 12l6.4-3.6z" fill="#fff" opacity=".95"/><circle cx="12" cy="12" r="2.2" fill="#1c1917"/></svg></span>{{ organisation }}</span>
   <div class="compte"><a class="lien" href="https://zelij.ai/" rel="noopener">by zelij.ai</a></div>
 </header>
+{% if tv %}<div class="tv-barre"><span class="tv-marque">{{ organisation }}</span><span class="tv-signature">les agents proposent · un humain décide</span><button type="button" class="bouton bouton--second bouton--petit" data-tv-plein-ecran>⛶ Plein écran</button><a class="lien" href="/vitrine/{{ jeton }}">Quitter</a></div>{% endif %}
 <main id="contenu" class="cadre">
   <p class="sur-titre">Regardez nos agents travailler</p>
   <h1>Ils proposent, nous décidons.</h1>
@@ -35,6 +36,7 @@
     <article><strong>{{ '%.2f'|format(etat.cout_jour_eur) }} €</strong><span>coût des agents sur 24 h</span></article>
   </div>
   <p class="note">Montez votre startup 100 % native IA : le même bureau, en édition gratuite, chez <a href="https://zelij.ai/" rel="noopener">zelij.ai</a>.</p>
+  {% if not tv %}<p class="note"><a href="/vitrine/{{ jeton }}?tv=1">Mode salle d'attente</a> : cette page en plein écran, pour une télé dans l'entrée.</p>{% endif %}
 </main>
 <footer class="pied"><p>Page publique de {{ organisation }} · propulsée par Zelij Core · <a href="https://zelij.ai/" rel="noopener">by zelij.ai</a></p></footer>
 <script src="/static/aquarium.js?v={{ VERSION }}" defer></script>
