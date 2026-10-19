@@ -238,3 +238,20 @@ code { font-family: var(--mono); font-size: .9em; background: var(--papier-2); p
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
 
 .pack--cible { outline: 2px solid var(--laiton); outline-offset: 2px; box-shadow: var(--ombre-2); }
+
+/* ---- encart « Une étoile pour Zelij Core » (0.9.1) : discret, en bas à droite, fermable, mémorisé trente jours */
+.etoile { position: fixed; right: 18px; bottom: 18px; z-index: 30; width: min(300px, calc(100vw - 36px)); padding: 14px 16px 14px; background: var(--carte); color: var(--encre);
+  border: 1px solid var(--line); border-radius: var(--rayon); box-shadow: var(--ombre-2, 0 14px 40px -18px rgba(0, 0, 0, .35)); }
+.etoile[hidden] { display: none; }
+.etoile.etoile--visible { animation: etoile-arrivee .5s var(--elan) both; }
+@keyframes etoile-arrivee { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+.etoile-fermer { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
+.etoile-fermer:hover, .etoile-fermer:focus-visible { background: var(--papier-2); color: var(--encre); outline: none; }
+.etoile-fermer:focus-visible { box-shadow: 0 0 0 3px var(--laiton-soft); }
+.etoile-titre { margin: 0 26px 4px 0; font-family: var(--display); font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; }
+.etoile-texte { margin: 0 0 10px; font-size: 13px; line-height: 1.45; color: var(--encre-2); }
+.etoile-bouton { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 6px 10px 6px 12px; border: 1px solid var(--line-forte); border-radius: 9px; background: var(--papier); color: var(--encre); text-decoration: none; font-size: 13px; font-weight: 600; transition: border-color .15s, background-color .15s; }
+.etoile-bouton:hover { border-color: var(--laiton); background: var(--laiton-soft); }
+.etoile-compte { margin-left: 2px; padding: 2px 8px; border-left: 1px solid var(--line-forte); color: var(--laiton); font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .etoile { right: 12px; left: 12px; bottom: 12px; width: auto; } }
+@media (prefers-reduced-motion: reduce) { .etoile.etoile--visible { animation: none; } }

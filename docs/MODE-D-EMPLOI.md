@@ -26,6 +26,8 @@ La page d'accueil. En haut, le **compteur du mois** : dépense des agents face a
 
 Une demande qui dépasse ce bureau (déploiement cloud, prospection, SEO, veille des prix, surveillance, usine logicielle, hébergement) ouvre un paquet « construire soi-même ou installer le module » : le Chef de cabinet met en face le temps de construction par le Bâtisseur et le module du catalogue ; approuver l'option module vous conduit au catalogue, lien d'achat prêt. Une demande simple reçoit une réponse directe. Une demande qui engage ouvre un paquet. Une demande de page (« rédige une page Tarifs ») produit un brouillon et ouvre une décision de publication : la page ne part vers le site qu'après votre approbation, et seulement sous forme de demande de fusion ou de brouillon, jamais en ligne directement.
 
+En bas à droite, un encart « Une étoile pour Zelij Core » renvoie au dépôt public ; la croix le ferme pour trente jours, `ETOILES_GITHUB=0` le retire.
+
 ### Finances
 Un journal par mois : ventes confirmées, charges déclarées, coût des agents, solde. Une vente n'existe que confirmée par la plateforme de paiement (import Stripe avec une clé restreinte en lecture, `STRIPE_SECRET_KEY`) ou saisie à la main **avec sa preuve** (référence de virement, numéro de facture). Les charges récurrentes (abonnement, hébergement, domaine) se déclarent une fois avec leur périodicité. L'export CSV est fait pour l'expert-comptable ; les cellules qui ressembleraient à une formule sont neutralisées.
 

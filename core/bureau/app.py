@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from core import VERSION, agents, db, demo, gouvernance, modules, passerelle, poche
+from core import VERSION, agents, db, demo, etoiles, gouvernance, modules, passerelle, poche
 from core.bureau import connexion as cx
 from core.executeur import Executeur
 from core.schema import migrer
@@ -187,6 +187,7 @@ def _garde(request: Request, c: db.Connexion, *, fondateur: bool = False) -> tup
 
 def _page(request: Request, nom: str, **ctx) -> HTMLResponse:
     ctx.update(request=request, message=MESSAGES.get(request.query_params.get("m", ""), ""))
+    ctx.setdefault("etoiles", etoiles.encart())            # encart « une étoile pour Zelij Core » (0.9.1), None si ETOILES_GITHUB=0
     if demo.actif():
         ctx.update(demo=True, demo_bandeau=demo.BANDEAU, demo_suggestions=demo.SUGGESTIONS, demo_guide=demo.GUIDE_INSTALLATION)
     if ctx.get("u"):

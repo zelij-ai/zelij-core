@@ -21,3 +21,17 @@
   });
   document.querySelectorAll('.bloc, .decision').forEach(function (el, i) { el.style.setProperty('--i', Math.min(i, 8)); });
 })();
+
+// Encart « Une étoile pour Zelij Core » (0.9.1) : révélé après un court délai, fermeture mémorisée trente jours dans ce navigateur.
+(function () {
+  'use strict';
+  var encart = document.getElementById('etoile'); if (!encart) return;
+  var cle = 'zelij-etoile-fermee', trenteJours = 30 * 24 * 3600 * 1000, fermee = 0;
+  try { fermee = Number(localStorage.getItem(cle) || 0); } catch (e) { fermee = 0; }
+  if (fermee && Date.now() - fermee < trenteJours) return;
+  window.setTimeout(function () { encart.hidden = false; encart.classList.add('etoile--visible'); }, 1200);
+  encart.querySelector('[data-etoile-fermer]').addEventListener('click', function () {
+    encart.hidden = true;
+    try { localStorage.setItem(cle, String(Date.now())); } catch (e) { /* stockage indisponible : l'encart reviendra à la prochaine page */ }
+  });
+})();

@@ -186,4 +186,4 @@ def test_cablage_et_documentation():
                        ("docs/INSTALLATION.md", "TELEGRAM_CHAT_ID"), (".env.example", "TELEGRAM_CHAT_ID"), ("CHANGELOG.md", "## 0.9.0")):
         assert attendu in (racine / f).read_text(encoding="utf-8"), f
     from core import VERSION
-    assert VERSION == "0.9.0"
+    assert tuple(int(x) for x in VERSION.split(".")) >= (0, 9, 0)      # « Dans la poche » est arrivé en 0.9.0

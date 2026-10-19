@@ -2,6 +2,13 @@
 
 Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il y a quelque chose à faire. Les correctifs de sécurité sont marqués **sécurité**.
 
+## 0.9.1 — 2026-10-19
+
+- **Une étoile pour Zelij Core.** Un encart discret en bas du bureau invite à suivre le dépôt public sur GitHub, avec le nombre
+  d'étoiles. Le serveur le lit sur `api.github.com`, sans jeton, une fois par jour au plus et en arrière-plan : aucune page ne
+  l'attend, et le navigateur ne contacte rien lui-même (politique de sécurité du contenu inchangée). La croix le ferme pour trente
+  jours. `ETOILES_GITHUB=0` dans `.env` le retire entièrement, lecture comprise : c'est le réglage d'une machine isolée.
+
 ## 0.9.0 — 2026-10-12
 
 - **Dans la poche : décider depuis le téléphone.** Quand un agent ouvre une décision, le fondateur la reçoit par e-mail avec le

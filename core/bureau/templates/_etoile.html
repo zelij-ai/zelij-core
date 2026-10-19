@@ -1,0 +1,16 @@
+{# Encart « Une étoile pour Zelij Core » (19/10) : lien vers le dépôt public, nombre d'étoiles si le serveur l'a lu, croix de
+   fermeture mémorisée trente jours dans le navigateur. Caché au chargement, révélé par bureau.js, pour ne jamais gêner. #}
+{% if etoiles %}
+<aside class="etoile" id="etoile" hidden aria-label="Une étoile pour Zelij Core">
+  <button type="button" class="etoile-fermer" data-etoile-fermer aria-label="Fermer cet encart">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <p class="etoile-titre">Une étoile pour Zelij Core</p>
+  <p class="etoile-texte">Suivez les versions et aidez la communauté à grandir sur GitHub.</p>
+  <a class="etoile-bouton" href="{{ etoiles.url }}" target="_blank" rel="noopener">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3 7h7l-6 4 2 7-6-4-6 4 2-7-6-4h7z"/></svg>
+    <span class="etoile-nom">{{ etoiles.nom }}</span>
+    <span class="etoile-compte" aria-label="Étoiles sur GitHub">★{% if etoiles.libelle %} {{ etoiles.libelle }}{% endif %}</span>
+  </a>
+</aside>
+{% endif %}
