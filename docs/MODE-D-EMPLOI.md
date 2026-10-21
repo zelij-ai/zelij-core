@@ -62,7 +62,18 @@ Les pages rédigées par les agents : brouillon, proposée (demande de fusion ou
 
 **Fondateur et membres.** Le fondateur décide, installe les modules, ouvre une mise en ligne et la page publique. Un membre rattaché à l'organisation lit et fait des demandes aux agents ; il ne décide pas.
 
+## L'avocat du diable
+
+Sous chaque recommandation, un encart plaide contre elle : trois objections au plus, la question à poser à l'agent avant
+d'approuver, ce qui vous ferait changer d'avis, et un verdict (approuver, attendre, refuser). Ce n'est pas un cinquième agent :
+il n'a aucun outil, ne lit que le paquet et ne décide rien. Quand il conclut « approuver », c'est qu'il n'a rien trouvé de
+solide contre : c'est une information aussi. Il coûte un appel court par décision, compté dans votre plafond ; `AVOCAT_DU_DIABLE=0`
+dans `.env` le retire.
+
 ## Décider depuis le téléphone
+
+**En swipant.** Connecté au bureau depuis le téléphone, « Décider en swipant » (ou `/decider`) présente les décisions en attente une carte à la fois : à droite pour approuver, à gauche pour refuser, vers le haut pour passer, « M » pour demander une modification. Chaque geste demande une confirmation ; au-delà de `DECIDER_SEUIL_EUR` (200 € par défaut) ou pour une décision irréversible, une case « j'ai lu » s'ajoute.
+
 
 **Par e-mail.** Dès que l'envoi d'e-mails est configuré (`SMTP_HOST`), chaque décision ouverte par un agent vous arrive en entier : objectif, proposition, options, recommandation, risques, réversibilité. Deux liens, « Approuver » et « Refuser ». Un lien ouvre une page qui rappelle le paquet et vous demande de confirmer : rien n'est décidé tant que vous n'avez pas pressé le bouton. Le lien ne sert qu'une fois et vaut sept jours ; dès que la décision est prise, par n'importe quel chemin, les liens tombent. Pour demander une modification avec une consigne, passez par le bureau. `DECISIONS_PAR_EMAIL=0` coupe ces e-mails.
 

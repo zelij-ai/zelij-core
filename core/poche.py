@@ -143,6 +143,12 @@ def texte_decision(d: dict, liens: dict[str, str] | None = None) -> str:
         lignes.append(f"Recommandation : {sans_liens(d['recommandation'])}")
     if d.get("risques"):
         lignes += ["", "Risques : " + " ; ".join(sans_liens(r) for r in d["risques"][:4])]
+    avocat = d.get("avocat") if isinstance(d.get("avocat"), dict) else None
+    if avocat:
+        lignes += ["", f"L'avocat du diable plaide contre la recommandation (verdict : {avocat.get('verdict', 'attendre')}) :"]
+        lignes += [f"- {sans_liens(o)}" for o in avocat.get("objections", [])[:3]]
+        if avocat.get("question"):
+            lignes.append(f"À demander avant d'approuver : {sans_liens(avocat['question'])}")
     lignes.append(f"Réversibilité : {d.get('reversibilite', 'reversible')}" + (f" · impact {d['impact_eur']:.0f} €" if d.get("impact_eur") else ""))
     if liens:
         lignes += ["", f"Approuver : {liens['approuver']}", f"Refuser : {liens['refuser']}",

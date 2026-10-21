@@ -11,6 +11,7 @@
     {% if d.pourquoi_maintenant %}<p class="small muted">Pourquoi maintenant : {{ d.pourquoi_maintenant }}</p>{% endif %}
     {% if d.options %}<p class="small">Options : {{ d.options | join(" · ") }}{% if d.recommandation %} — recommandation : <strong>{{ d.recommandation }}</strong>{% endif %}</p>{% endif %}
     {% if d.risques %}<p class="small">Risques : {{ d.risques | join(" ; ") }}</p>{% endif %}
+    {% if d.avocat %}<p class="small"><strong>L'avocat du diable ({{ d.avocat.verdict }}) :</strong> {{ d.avocat.objections | join(" ; ") }}{% if d.avocat.question %} — à demander : {{ d.avocat.question }}{% endif %}</p>{% endif %}
     <p class="small muted">Réversibilité : {{ d.reversibilite }}{% if d.impact_eur %} · impact {{ "%.0f" | format(d.impact_eur) }} €{% endif %}</p>
   </article>
   <form method="post" action="/poche/{{ jeton }}" class="formulaire">

@@ -315,6 +315,21 @@ def bureau(request: Request):
                      tarifs_le=passerelle.TARIFS_RELEVES_LE, modele=_modele_affiche(fiches))
 
 
+DECIDER_SEUIL_EUR = float(os.environ.get("DECIDER_SEUIL_EUR", "200") or 200)
+
+
+@app.get("/decider", response_class=HTMLResponse)
+def decider_page(request: Request):
+    """Décider en swipant (0.9.3) : une carte par décision en attente, droite / gauche / haut, confirmation à chaque geste.
+    Réservé au fondateur, comme la décision elle-même ; les cartes irréversibles ou au-dessus de DECIDER_SEUIL_EUR exigent
+    une case « j'ai lu » avant l'approbation. Le geste n'est qu'une interface : la décision part par /decisions/{id}/{action}."""
+    with db.connexion() as c:
+        u, refus = _garde(request, c, fondateur=True)
+        if refus:
+            return refus
+        return _page(request, "decider.html", u=u, decisions=gouvernance.en_attente(c, u["org_id"]), seuil_lecture=DECIDER_SEUIL_EUR)
+
+
 def _modele_affiche(fiches: dict) -> dict:
     """Ce que le compteur du bureau dit du modèle : le fournisseur, et si un tarif manque (le coût est alors compté au plus cher)."""
     try:
@@ -474,6 +489,10 @@ def _ouvrir(c: db.Connexion, org_id: str, paquet) -> str:
     """Ouvre la décision et prévient le fondateur là où il est (e-mail avec liens signés, Telegram) : « Dans la poche », 0.9.0.
     Une notification qui échoue n'empêche jamais la décision d'exister : elle attend dans le bureau."""
     did = gouvernance.ouvrir(c, org_id, paquet)
+    from core import avocat as _avocat
+    from dataclasses import asdict as _asdict
+
+    _avocat.plaider_decision(c, org_id, did, _asdict(paquet))     # 0.9.4 : ne bloque jamais, s'affiche sous la recommandation
     try:
         poche.prevenir(c, org_id, did)
     except Exception:  # noqa: BLE001

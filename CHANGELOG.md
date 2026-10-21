@@ -2,6 +2,22 @@
 
 Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il y a quelque chose à faire. Les correctifs de sécurité sont marqués **sécurité**.
 
+## 0.9.4 — 2026-10-21
+
+- **L'avocat du diable.** À chaque décision ouverte, un second avis plaide contre la recommandation de l'agent : trois objections
+  au plus, la question à poser avant d'approuver, ce qui ferait changer d'avis, et un verdict (approuver, attendre, refuser). Il
+  lit le paquet, rien d'autre : aucun outil, aucune mémoire, aucune adresse. Il s'affiche sous la recommandation dans le bureau,
+  en swipant et dans la poche (e-mail, Telegram). Il ne décide rien : la porte reste la vôtre. Un appel court au modèle « rapide »
+  (`AVOCAT_MODELE` pour en changer), compté dans le plafond mensuel ; `AVOCAT_DU_DIABLE=0` le retire. En démonstration, un
+  réquisitoire écrit d'avance tient sa place.
+
+## 0.9.3 — 2026-10-20
+
+- **Décider en swipant.** Une page `/decider` (bouton « Décider en swipant » sur le bureau) montre les décisions en attente une
+  carte à la fois : glisser à droite approuve, à gauche refuse, vers le haut passe à la suivante, « M » demande une modification.
+  Chaque geste ouvre une confirmation ; une carte irréversible ou au-dessus de `DECIDER_SEUIL_EUR` (200 € par défaut) exige une
+  case « j'ai lu ». Le geste n'est qu'une interface : la décision part par la même route que le bureau, journalisée de la même façon.
+
 ## 0.9.2 — 2026-10-19
 
 - **Mode salle d'attente.** La page publique de l'aquarium s'ouvre en plein écran sur une télé (`/vitrine/<jeton>?tv=1`, bouton

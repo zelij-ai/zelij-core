@@ -25,6 +25,7 @@
 
 <section class="bloc">
   <h2>Décisions en attente <span class="pastille">{{ en_attente|length }}</span></h2>
+  {% if en_attente %}<p class="sw-lien"><a class="bouton bouton--second bouton--petit" href="/decider">Décider en swipant</a> <span class="small muted">une carte à la fois, depuis le téléphone</span></p>{% endif %}
   {% if not en_attente %}<p class="vide">Rien n'attend votre décision. Quand un agent proposera quelque chose qui engage l'entreprise, le paquet complet apparaîtra ici : objectif, options, risques, retour arrière.</p>{% endif %}
   {% for d in en_attente %}
   <article class="decision">
@@ -37,6 +38,18 @@
     {% if d.pourquoi_maintenant %}<p class="small"><strong>Pourquoi maintenant :</strong> {{ d.pourquoi_maintenant }}</p>{% endif %}
     <div class="chips" aria-label="Options">{% for o in d.options %}<span class="chip {% if o == d.recommandation %}chip--reco{% endif %}">{{ o }}</span>{% endfor %}</div>
     <p class="small"><strong>Recommandation :</strong> {{ d.recommandation }}</p>
+    {% if d.avocat %}
+    <aside class="avocat avocat--{{ d.avocat.verdict }}" role="note" aria-label="L'avocat du diable plaide contre la recommandation">
+      <header class="avocat-tete">
+        <span class="avocat-disque" aria-hidden="true"><svg class="avocat-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M5 21h14M12 6l6 2-3 7a3 3 0 0 1-6 0l3-7M12 6 6 8l3 7a3 3 0 0 1-6 0l3-7"/></svg></span>
+        <div class="avocat-titres"><p class="avocat-eyebrow">Contre la recommandation</p><p class="avocat-titre">L'avocat du diable</p></div>
+        <span class="statut avocat-verdict avocat-verdict--{{ d.avocat.verdict }}">{% if d.avocat.verdict == 'approuver' %}✓ la recommandation tient{% elif d.avocat.verdict == 'refuser' %}✕ plaide le refus{% else %}‖ plaide l'attente{% endif %}</span>
+      </header>
+      <ol class="avocat-objections">{% for o in d.avocat.objections %}<li>{{ o }}</li>{% endfor %}</ol>
+      {% if d.avocat.question %}<blockquote class="avocat-question"><span class="avocat-etiquette">À demander avant d'approuver</span>{{ d.avocat.question }}</blockquote>{% endif %}
+      {% if d.avocat.bascule %}<p class="avocat-bascule"><span class="avocat-etiquette">Ce qui ferait changer d'avis</span>{{ d.avocat.bascule }}</p>{% endif %}
+    </aside>
+    {% endif %}
     {% if d.risques %}<p class="small"><strong>Risques :</strong> {{ d.risques|join(' · ') }}</p>{% endif %}
     <p class="small"><strong>Réversibilité :</strong> {{ d.reversibilite }}{% if d.impact_eur %} · <strong>impact :</strong> {{ '%.2f'|format(d.impact_eur) }} €{% endif %}</p>
     {% if d.plan %}<p class="small"><strong>Plan :</strong> {{ d.plan|join(' → ') }}</p>{% endif %}

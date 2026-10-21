@@ -74,7 +74,9 @@ AJOUTS = [
     ("decisions", "execution_apres", "TEXT"),
     ("organisations", "jeton_public", "TEXT"),       # lot 4 : page publique « regardez nos agents travailler »
     ("utilisateurs", "session_n", "INTEGER NOT NULL DEFAULT 0"),   # 0.7.4 : la déconnexion révoque les cookies déjà émis
-    ("decisions", "provenance", "TEXT NOT NULL DEFAULT ''"),         # 0.7.6 : ce que l'agent a lu au dehors en préparant la décision
+    ("decisions", "provenance", "TEXT NOT NULL DEFAULT ''"),
+    ("decisions", "avocat", "TEXT NOT NULL DEFAULT ''"),              # 0.9.4 : l'avocat du diable, JSON (objections, question, bascule, verdict)
+    ("decisions", "avocat_cout_usd", "REAL NOT NULL DEFAULT 0"),      # 0.9.4 : son coût, compté dans le plafond mensuel         # 0.7.6 : ce que l'agent a lu au dehors en préparant la décision
 ]
 
 

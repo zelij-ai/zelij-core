@@ -122,6 +122,9 @@ def _hydrater(row: dict) -> dict:
     from core import provenance as _provenance
 
     row["provenance"] = _provenance.evaluer(brut, demandeur=row.get("demandeur") or "", agent_cible=row.get("agent_cible") or "", tache=row.get("tache") or "")
+    from core import avocat as _avocat
+
+    row["avocat"] = _avocat.lire(row.get("avocat"))
     return row
 
 

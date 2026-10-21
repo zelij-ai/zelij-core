@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block titre %}Décider{% endblock %}
+{% block contenu %}
+{# Décider en swipant (0.9.3) : une carte par décision en attente. Droite = approuver, gauche = refuser, haut = plus tard,
+   M = demander une modification. Chaque geste ouvre une confirmation ; la décision part par la route du bureau (POST + CSRF). #}
+<section id="decider" class="sw" data-csrf="{{ csrf }}">
+  <div class="tete-page sw-tete">
+    <div><p class="sur-titre">Décider</p><h1>Une carte à la fois.</h1></div>
+    <div class="actions"><span class="sw-compteur" data-sw-compteur aria-live="polite">{{ decisions|length }} à trancher</span><a class="bouton bouton--second" href="/bureau">Le bureau</a></div>
+  </div>
+  <p class="intro sw-intro">Glissez à droite pour approuver, à gauche pour refuser, vers le haut pour passer. Rien ne part sans votre confirmation.</p>
+  <div class="sw-scene">
+    <span class="sw-indice sw-indice--gauche" data-indice="gauche" aria-hidden="true">Refuser</span>
+    <span class="sw-indice sw-indice--haut" data-indice="plus_tard" aria-hidden="true">Plus tard</span>
+    <span class="sw-indice sw-indice--droite" data-indice="droite" aria-hidden="true">Approuver</span>
+    <div class="sw-pile" role="list">
+      {% for d in decisions %}
+      <article class="sw-carte" role="listitem" data-id="{{ d.id }}" data-objectif="{{ d.objectif }}" data-lecture="{{ 1 if (d.reversibilite == 'irreversible' or (d.impact_eur or 0) >= seuil_lecture) else 0 }}"
+               data-resume="{{ d.demandeur }} · {{ d.reversibilite }}{% if d.impact_eur %} · {{ '%.0f'|format(d.impact_eur) }} €{% endif %}">
+        <header class="sw-carte-tete"><span class="sw-demandeur">{{ d.demandeur }}</span><span class="sw-quand">{{ (d.cree_le or '')[:16]|replace('T', ' ') }}</span></header>
+        <h2>{{ d.objectif }}</h2>
+        <p class="sw-proposition">{{ d.proposition }}</p>
+        {% if d.pourquoi_maintenant %}<p class="small muted">Pourquoi maintenant : {{ d.pourquoi_maintenant }}</p>{% endif %}
+        <div class="sw-chips">
+          <span class="statut {% if d.reversibilite == 'irreversible' %}statut--refusee{% else %}statut--approuvee{% endif %}">{{ d.reversibilite|replace('_', ' ') }}</span>
+          <span class="statut">{% if d.impact_eur %}{{ '%.0f'|format(d.impact_eur) }} €{% else %}0 €{% endif %}</span>
+          {% if d.recommandation %}<span class="statut statut--en_attente">recommandé : {{ d.recommandation }}</span>{% endif %}
+          {% if d.avocat %}<span class="statut avocat-chip avocat-chip--{{ d.avocat.verdict }}">avocat du diable : {% if d.avocat.verdict == 'approuver' %}✓ tient{% elif d.avocat.verdict == 'refuser' %}✕ refus{% else %}‖ attendre{% endif %}</span>{% endif %}
+        </div>
+        {% if d.avocat %}<p class="small sw-avocat"><strong>Contre :</strong> {{ d.avocat.objections[0] }}</p>{% endif %}
+        <details class="sw-details"><summary>Options, risques, plan</summary>
+          {% if d.options %}<p class="small">Options : {{ d.options | join(' · ') }}</p>{% endif %}
+          {% if d.risques %}<p class="small">Risques : {{ d.risques | join(' ; ') }}</p>{% endif %}
+          {% if d.plan %}<p class="small">Plan : {{ d.plan | join(' → ') }}</p>{% endif %}
+          {% if d.retour_arriere %}<p class="small">Retour arrière : {{ d.retour_arriere | join(' → ') }}</p>{% endif %}
+          {% if d.avocat %}<p class="small"><strong>L'avocat du diable :</strong> {{ d.avocat.objections | join(' ; ') }}{% if d.avocat.question %} — à demander : {{ d.avocat.question }}{% endif %}</p>{% endif %}
+        </details>
+      </article>
+      {% endfor %}
+    </div>
+    <p class="sw-vide">Rien à trancher. <a href="/bureau">Retour au bureau</a>.</p>
+  </div>
+  <div class="sw-boutons">
+    <button type="button" class="bouton bouton--second" data-sw-geste="gauche" aria-label="Refuser (flèche gauche)">✕ Refuser</button>
+    <button type="button" class="bouton bouton--second" data-sw-geste="plus_tard" aria-label="Plus tard (flèche haut)">↑ Plus tard</button>
+    <button type="button" class="bouton bouton--second" data-sw-modifier aria-label="Demander une modification (M)">✎ Modifier</button>
+    <button type="button" class="bouton bouton--laiton" data-sw-geste="droite" aria-label="Approuver (flèche droite)">✓ Approuver</button>
+  </div>
+  <dialog id="sw-feuille" class="sw-feuille" aria-labelledby="sw-feuille-titre">
+    <form method="post" action="" id="sw-form" class="formulaire">
+      <input type="hidden" name="_csrf" value="">
+      <h2 id="sw-feuille-titre" data-sw-titre>Confirmer</h2>
+      <p class="small muted" data-sw-sous></p>
+      <div data-sw-consigne hidden><label for="sw-consigne">Ce que je veux changer (transmis à l'agent, obligatoire)</label><textarea id="sw-consigne" name="consigne" rows="3" placeholder="ex. budget 300 € maximum, retirer l'option 2"></textarea></div>
+      <label class="sw-lu" data-sw-lu hidden><input type="checkbox"> J'ai lu le paquet : cette décision est irréversible ou dépasse {{ '%.0f'|format(seuil_lecture) }} €.</label>
+      <div class="sw-feuille-actions"><button type="button" class="bouton bouton--second" data-sw-annuler>Annuler</button><button type="submit" class="bouton bouton--laiton" data-sw-confirmer>Confirmer</button></div>
+    </form>
+  </dialog>
+</section>
+<script src="/static/decider.js?v={{ VERSION }}" defer></script>
+{% endblock %}

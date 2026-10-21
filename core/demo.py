@@ -179,6 +179,10 @@ def preparer() -> str:
             plan=["Proposition sur le site", "Relecture et fusion par vous"], retour_arriere=["Fermer la demande"], portee="publication", agent_cible="croissance",
             tache=f"publier:{pid}", provenance={"pages": [], "depot": [], "refus": [], "autres": 0}))
         c.executer("UPDATE publications SET decision_id = ? WHERE id = ?", (did, pid))
+        from core import avocat as _avocat
+
+        for d in gouvernance.en_attente(c, org):          # l'avocat du diable de la démonstration : écrit d'avance, rien ne sort
+            _avocat.enregistrer(c, org, d["id"], dict(_avocat.AVIS_DEMO, modele="démonstration"))
 
         # Finances et contacts : de quoi lire un journal du mois et un suivi conforme
         mois = db.mois_courant()

@@ -75,7 +75,13 @@ def cout_usd(modele: str, usage: Any) -> float:
 
 def cout_du_mois_eur(c, org_id: str, mois: str) -> float:
     r = c.une("SELECT COALESCE(SUM(cout_usd), 0) AS total FROM executions WHERE org_id = ? AND cree_le LIKE ?", (org_id, mois + "%"))
-    return round(float((r or {}).get("total") or 0) * taux_usd_eur(), 4)
+    total = float((r or {}).get("total") or 0)
+    try:   # 0.9.4 : l'avocat du diable coûte un appel par décision ; il compte dans le même plafond
+        a = c.une("SELECT COALESCE(SUM(avocat_cout_usd), 0) AS total FROM decisions WHERE org_id = ? AND cree_le LIKE ?", (org_id, mois + "%"))
+        total += float((a or {}).get("total") or 0)
+    except Exception:  # noqa: BLE001 — base pas encore migrée
+        pass
+    return round(total * taux_usd_eur(), 4)
 
 
 def plafond_atteint(c, org_id: str, mois: str) -> tuple[bool, float, float]:
