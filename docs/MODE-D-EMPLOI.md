@@ -93,6 +93,15 @@ dans `.env` le retire.
 
 Déposez des images carrées (256 px, `webp`, `png` ou `jpg`) dans `portraits/` : `portraits/<identifiant>.webp` pour un agent, `portraits/fondateur.webp` pour vous. Elles apparaissent dans l'aquarium, sur la vitrine et dans l'en-tête du bureau. Les quatre agents de l'édition arrivent avec le portrait d'un personnage fictif (`agents/<identifiant>/portrait.webp`) ; votre fichier dans `portraits/` passe devant. Sans aucune photo, un agent a un monogramme et le fondateur une silhouette. Voir `portraits/README.md`.
 
+## Frugal par construction
+
+Le Bâtisseur et les autres agents obéissent à une échelle avant d'écrire la moindre ligne : est-ce que ça doit exister, le
+dépôt l'a-t-il déjà, la bibliothèque standard le fait-elle, une fonction native de la plateforme, une dépendance déjà installée,
+une seule ligne suffit-elle, sinon le minimum qui marche. Jamais au détriment de la validation, des erreurs, de la sécurité ou de
+l'accessibilité. Toute logique à risque part avec un petit test, et chaque réponse se termine par ce qui n'a pas été vérifié. Les
+raccourcis assumés sont marqués « raccourci : » dans le code, avec le moment où y revenir. Résultat attendu : moins de code,
+moins de jetons, des demandes de fusion que vous pouvez lire en entier.
+
 ## Ce que Zelij Core ne fera jamais
 
 - Payer, acheter, engager une dépense : il n'a aucun moyen de paiement.

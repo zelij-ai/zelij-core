@@ -7,6 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssh-client 
     && groupadd -r -g 10001 core && useradd -r -u 10001 -g core -d /home/core -s /usr/sbin/nologin core \
     && mkdir -p /home/core /data/sauvegardes /srv/app/modules && chown -R core:core /home/core /data /srv/app
 COPY requirements.txt .
+# Incident eMudhra / emSign (python.org, 20/10/2026) : pip 26.2.2 depuis la roue vérifiée par empreinte, avant toute
+# autre installation (un pip antérieur fait confiance aux intermédiaires compromis) ; certifi ≥ 2026.10.19 dans requirements.
+RUN printf 'pip @ https://files.pythonhosted.org/packages/3f/06/3e4420302363fbb71be3c7f35ce042f54bfca330e3e66b3a2e3c4cca579f/pip-26.2.2-py3-none-any.whl --hash=sha256:fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70\n' > /tmp/pip-sure.txt \
+    && python -m pip install --no-cache-dir --require-hashes -r /tmp/pip-sure.txt && rm /tmp/pip-sure.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY --chown=core:core core ./core
 COPY --chown=core:core agents ./agents

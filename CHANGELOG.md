@@ -2,6 +2,14 @@
 
 Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il y a quelque chose à faire. Les correctifs de sécurité sont marqués **sécurité**.
 
+## 0.9.5 — 2026-10-22
+
+- **Frugal par construction.** Deux règles de la maison de plus pour tous les agents : l'échelle à parcourir avant d'écrire du code
+  (ça doit exister, le dépôt l'a déjà, bibliothèque standard, fonction native, dépendance installée, une seule ligne, sinon le
+  minimum qui marche), jamais au détriment de la validation, des erreurs, de la sécurité ou de l'accessibilité ; un petit test sur
+  toute logique à risque, la fin de réponse « non vérifié », les raccourcis marqués « raccourci : ». Moins de code, moins de jetons,
+  des demandes de fusion lisibles en entier.
+
 ## 0.9.4 — 2026-10-21
 
 - **L'avocat du diable.** À chaque décision ouverte, un second avis plaide contre la recommandation de l'agent : trois objections
