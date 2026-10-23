@@ -6,4 +6,4 @@ psycopg[binary]==3.2.9
 anthropic==1.12.1
 httpx==0.28.1
 cryptography==50.0.2
-certifi>=2026.10.19   # incident emSign (20/10/2026) : bundle sans les racines compromises
+certifi==2026.10.23   # incident emSign (20/10/2026) : bundle sans les racines compromises, épinglé comme toute dépendance
