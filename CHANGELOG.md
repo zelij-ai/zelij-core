@@ -2,6 +2,12 @@
 
 Chaque version dit ce qui change pour le fondateur et ce qu'il doit faire, s'il y a quelque chose à faire. Les correctifs de sécurité sont marqués **sécurité**.
 
+## 0.9.6 — 2026-10-23
+
+- **Sécurité, dépendances.** `pip` 26.2.2 installé depuis la roue vérifiée par empreinte avant toute autre installation, et `certifi`
+  épinglé en 2026.10.23 : bundle sans les racines de l'incident eMudhra / emSign du 20/10/2026. Rien à faire : reconstruire l'image
+  suffit. Cette version remplace la 0.9.5, dont l'étiquette avait été posée sur une révision qui échouait au contrôle des dépendances.
+
 ## 0.9.5 — 2026-10-22
 
 - **Frugal par construction.** Deux règles de la maison de plus pour tous les agents : l'échelle à parcourir avant d'écrire du code
